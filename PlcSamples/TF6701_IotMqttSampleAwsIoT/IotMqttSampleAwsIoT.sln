@@ -1,0 +1,71 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{B1E792BE-AA5F-4E3C-8C82-674BF9C0715B}") = "IotMqttSampleAwsIoT", "IotMqttSample03\IotMqttSampleAwsIoT.tsproj", "{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F9206373-15E4-42E0-AD30-3B859F9BE659}"
+	ProjectSection(SolutionItems) = preProject
+		IotMqttSample03\IotMqttSampleAwsIoT.tszip = IotMqttSample03\IotMqttSampleAwsIoT.tszip
+		IotMqttSample03\root.pem = IotMqttSample03\root.pem
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|TwinCAT CE7 (ARMV7) = Debug|TwinCAT CE7 (ARMV7)
+		Debug|TwinCAT OS (ARMT2) = Debug|TwinCAT OS (ARMT2)
+		Debug|TwinCAT RT (x64) = Debug|TwinCAT RT (x64)
+		Debug|TwinCAT RT (x86) = Debug|TwinCAT RT (x86)
+		Release|TwinCAT CE7 (ARMV7) = Release|TwinCAT CE7 (ARMV7)
+		Release|TwinCAT OS (ARMT2) = Release|TwinCAT OS (ARMT2)
+		Release|TwinCAT RT (x64) = Release|TwinCAT RT (x64)
+		Release|TwinCAT RT (x86) = Release|TwinCAT RT (x86)
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Debug|TwinCAT CE7 (ARMV7).ActiveCfg = Debug|TwinCAT CE7 (ARMV7)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Debug|TwinCAT CE7 (ARMV7).Build.0 = Debug|TwinCAT CE7 (ARMV7)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Debug|TwinCAT OS (ARMT2).ActiveCfg = Debug|TwinCAT RT (x86)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Debug|TwinCAT RT (x64).ActiveCfg = Debug|TwinCAT RT (x64)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Debug|TwinCAT RT (x64).Build.0 = Debug|TwinCAT RT (x64)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Debug|TwinCAT RT (x86).ActiveCfg = Debug|TwinCAT RT (x86)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Debug|TwinCAT RT (x86).Build.0 = Debug|TwinCAT RT (x86)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Release|TwinCAT CE7 (ARMV7).ActiveCfg = Release|TwinCAT CE7 (ARMV7)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Release|TwinCAT CE7 (ARMV7).Build.0 = Release|TwinCAT CE7 (ARMV7)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Release|TwinCAT OS (ARMT2).ActiveCfg = Release|TwinCAT RT (x86)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Release|TwinCAT RT (x64).ActiveCfg = Release|TwinCAT RT (x64)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Release|TwinCAT RT (x64).Build.0 = Release|TwinCAT RT (x64)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Release|TwinCAT RT (x86).ActiveCfg = Release|TwinCAT RT (x86)
+		{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}.Release|TwinCAT RT (x86).Build.0 = Release|TwinCAT RT (x86)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Debug|TwinCAT CE7 (ARMV7).ActiveCfg = Debug|TwinCAT CE7 (ARMV7)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Debug|TwinCAT CE7 (ARMV7).Build.0 = Debug|TwinCAT CE7 (ARMV7)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Debug|TwinCAT OS (ARMT2).ActiveCfg = Debug|TwinCAT RT (x86)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Debug|TwinCAT RT (x64).ActiveCfg = Debug|TwinCAT RT (x64)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Debug|TwinCAT RT (x64).Build.0 = Debug|TwinCAT RT (x64)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Debug|TwinCAT RT (x86).ActiveCfg = Debug|TwinCAT RT (x86)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Debug|TwinCAT RT (x86).Build.0 = Debug|TwinCAT RT (x86)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Release|TwinCAT CE7 (ARMV7).ActiveCfg = Release|TwinCAT CE7 (ARMV7)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Release|TwinCAT CE7 (ARMV7).Build.0 = Release|TwinCAT CE7 (ARMV7)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Release|TwinCAT OS (ARMT2).ActiveCfg = Release|TwinCAT RT (x86)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Release|TwinCAT RT (x64).ActiveCfg = Release|TwinCAT RT (x64)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Release|TwinCAT RT (x64).Build.0 = Release|TwinCAT RT (x64)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Release|TwinCAT RT (x86).ActiveCfg = Release|TwinCAT RT (x86)
+		{2CFCE58D-4DA8-4CDF-87F9-9D78CEE27624}.Release|TwinCAT RT (x86).Build.0 = Release|TwinCAT RT (x86)
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://nt-teamfd02:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = IotMqttSample03\\IotMqttSampleAwsIoT.tsproj
+		SccProjectName1 = IotMqttSample03
+		SccLocalPath1 = IotMqttSample03
+		SccProjectUniqueName2 = IotMqttSample03\\PlcIotMqttSampleAwsIoT\\PlcIotMqttSampleAwsIoT.plcproj
+		SccProjectTopLevelParentUniqueName2 = IotMqttSample03\\IotMqttSampleAwsIoT.tsproj
+		SccProjectName2 = IotMqttSample03/PlcIotMqttSampleAwsIoT
+		SccLocalPath2 = IotMqttSample03\\PlcIotMqttSampleAwsIoT
+	EndGlobalSection
+EndGlobal

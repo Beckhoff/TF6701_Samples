@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PrgMqttCom
+VAR
+	(* MQTT function block *)
+	fbMqttClient 		: FB_IotMqttClient;
+	fbMessageQueue 		: FB_IotMqttMessageQueue;
+	fbMessage 			: FB_IotMqttMessage;
+	bSetParameter 		: BOOL := TRUE;
+	bConnect 			: BOOL := TRUE;
+	hrErrorOccurred 	: HRESULT;
+	
+	(* JWT *)
+	//fbJwt				: FB_JwtHelper;
+	fbJwt				: FB_JwtEncode;
+	nState				: UINT;
+	hResult				: HRESULT;
+	sJwt				: STRING(512);
+	sJwtPayload			: STRING(512); // '{"aud": "twincat-iot","iat": 1560240662,"exp": 1560327062}'
+	fbJwtPayload		: FB_JsonSaxWriter;	
+	sPrivateKeyBuffer	: STRING(2048);
+	dtIAT 				: DT;
+	dtEXP 				: DT;
+	ftTemp 				: T_FileTime;
+	fbGetTime 			: GETSYSTEMTIME;
+	
+	(* Publish *)
+	sTopicPub 			: STRING(255) := '/devices/sveng-nb05/events';
+  	fbJson      		: FB_JsonSaxWriter;
+  	sJsonDoc    		: STRING(255);
+	fbTimer 			: TON := (PT:=T#1S);
+	i					: UDINT;
+	j 					: REAL;
+	
+	(* Subscribtion *)
+	bSubscribed 		: BOOL;
+	sTopicSub 			: STRING(255) := '/devices/sveng-nb05/commands/#';
+
+	(* received message *)	
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv 			: STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv 		: STRING(255);
+
+	(* Time *)
+	systime				: GETSYSTEMTIME;
+	fbSystemTime    	: GETSYSTEMTIME;
+	timeAsFileTime  	: T_FILETIME;
+	timeAsDT        	: DT;
+
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* Create Json Web Token (JWT) *)
+CASE nState OF
+	0 :
+		(* Prepare JWT payload *)
+		fbGetTime(timeLoDW => ftTemp.dwLowDateTime, timeHiDW => ftTemp.dwHighDateTime);
+		dtIAT := FILETIME_TO_DT(ftTemp);
+		dtEXP := dtIAT + T#24H;
+		fbJwtPayload.StartObject();
+		fbJwtPayload.AddKeyString('aud', 'twincat-iot');
+		fbJwtPayload.AddKeyNumber('iat', DT_TO_DINT(dtIAT));
+		fbJwtPayload.AddKeyNumber('exp', DT_TO_DINT(dtEXP));
+		fbJwtPayload.EndObject();
+		sJwtPayload := fbJwtPayload.GetDocument();
+		fbJwtPayload.ResetDocument();
+		nState := 1;
+
+	1 : 
+		(* Generate JWT *)
+		fbJwt(	bExecute:=TRUE, 
+				sHeaderAlg:='RS256', 
+				sPayload:=sJwtPayload,
+				pKey:=ADR(sPrivateKeyBuffer),
+				nKeySize:=SIZEOF(sPrivateKeyBuffer),
+				sKeyFilePath:='c:\TwinCAT\3.1\Config\Certificates\Google\rsa_private.pem', 
+				sJwt:=sJwt, 
+				nJwtSize:=SIZEOF(sJwt),
+				hrErrorCode=>hResult);
+		
+		IF NOT fbJwt.bBusy THEN
+			IF NOT fbJwt.bError THEN
+				fbJwt(bExecute:=FALSE, sJwt:=sJwt);
+				nState := 2;
+			END_IF
+		END_IF
+		
+	2 : 
+		bSetParameter := FALSE;
+		
+		(* Broker settings für Google IoT Core *)
+		fbMqttClient.sHostName:= 'mqtt.googleapis.com';
+		fbMqttClient.nHostPort:= 8883;
+		fbMqttClient.sClientId:= 'projects/twincat-iot/locations/europe-west1/registries/twincat-iot-registry/devices/sveng-nb05'; 
+		fbMqttClient.sUserName:= 'unused';
+		fbMqttClient.sUserPassword:= sJwt;
+	
+		(* TLS settings for Google IoT Core connection *)
+		fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\Google\roots.pem';
+		fbMqttClient.ipMessageQueue := fbMessageQueue;
+		
+		nState := 3;
+		
+	3 : 
+		(* Get current system time *)
+		fbSystemTime(timeLoDW =>timeAsFileTime.dwLowDateTime, timeHiDW =>timeAsFileTime.dwHighDateTime);
+		timeAsDT := FILETIME_TO_DT( timeAsFileTime );
+		
+		fbMqttClient.Execute(bConnect);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+		IF fbMessageQueue.nQueuedMessages > 0 THEN
+			IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+				fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+				fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+			END_IF
+		END_IF
+		
+		IF fbMqttClient.bConnected THEN
+			IF NOT bSubscribed THEN
+				bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+				IF fbMqttClient.bError THEN
+					// add your error logging here
+					hrErrorOccurred := fbMqttClient.hrErrorCode;
+				END_IF
+			END_IF
+			
+			(* Publish data cyclically based on Timer *)
+			fbTimer(IN:=TRUE);
+			IF fbTimer.Q THEN
+				fbTimer(IN:=FALSE);
+				(* Create some "random" data  *)
+				i := i + 1;
+				j := j + 0.1;
+				(* Prepare JSON document *)
+				fbJson.StartObject();
+				fbJson.AddKey('Timestamp');
+				fbJson.AddDateTime(timeAsDT);
+				fbJson.AddKey('SensorData1');
+				fbJson.AddReal(j);
+				fbJson.AddKey('SensorData2');
+				fbJson.AddDint(i);
+				fbJson.EndObject();
+				sJsonDoc := fbJson.GetDocument();
+				fbJson.ResetDocument();
+				(* Publish message *)
+				fbMqttClient.Publish(	sTopic:= sTopicPub, 
+										pPayload:= ADR(sJsonDoc), nPayloadSize:= LEN2(ADR(sJsonDoc)), 
+										eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+				IF fbMqttClient.bError THEN
+					hrErrorOccurred := fbMqttClient.hrErrorCode;
+				END_IF
+			END_IF
+		END_IF	
+		
+END_CASE
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="578" Count="0" />
+      <LineId Id="742" Count="0" />
+      <LineId Id="744" Count="0" />
+      <LineId Id="772" Count="7" />
+      <LineId Id="782" Count="1" />
+      <LineId Id="771" Count="0" />
+      <LineId Id="785" Count="0" />
+      <LineId Id="770" Count="0" />
+      <LineId Id="784" Count="0" />
+      <LineId Id="786" Count="0" />
+      <LineId Id="746" Count="0" />
+      <LineId Id="757" Count="1" />
+      <LineId Id="914" Count="0" />
+      <LineId Id="916" Count="0" />
+      <LineId Id="759" Count="2" />
+      <LineId Id="793" Count="0" />
+      <LineId Id="748" Count="0" />
+      <LineId Id="764" Count="1" />
+      <LineId Id="788" Count="0" />
+      <LineId Id="766" Count="1" />
+      <LineId Id="762" Count="1" />
+      <LineId Id="747" Count="0" />
+      <LineId Id="753" Count="0" />
+      <LineId Id="796" Count="0" />
+      <LineId Id="807" Count="0" />
+      <LineId Id="797" Count="2" />
+      <LineId Id="801" Count="4" />
+      <LineId Id="795" Count="0" />
+      <LineId Id="791" Count="0" />
+      <LineId Id="811" Count="1" />
+      <LineId Id="808" Count="0" />
+      <LineId Id="813" Count="50" />
+      <LineId Id="810" Count="0" />
+      <LineId Id="809" Count="0" />
+      <LineId Id="745" Count="0" />
+      <LineId Id="486" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

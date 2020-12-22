@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.7">
+  <POU Name="PrgMqttCom" Id="{11d1d173-790f-4e76-8f82-20759bf36aca}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	(* ================================================= *)
+	(* Connection establishment *)
+	(* ================================================= *)
+  	fbMqttClient 	: FB_IotMqttClient;
+	stTLSconfig     : ST_IotMqttTls;
+	bConnect 		: BOOL := TRUE;
+	bSetParameter 	: BOOL := TRUE;
+	fbTimer 		: TON := (PT:=T#2S);
+	(* ================================================= *)
+	
+	
+	(* ================================================= *)
+	(* Publisher variables *)
+	(* ================================================= *)
+	sTopicPub 		: STRING(255) := 'channels/####/publish/####'; // channels/<channelID>/publish/<apikey> 
+	publishCounter	: UDINT := 0;
+	(* ================================================= *)
+		
+	
+	(* ================================================= *)
+	(* payload *)
+	(* ================================================= *)	
+    fbGetTime  : GETSYSTEMTIME;
+    filetime   : T_FILETIME;
+    sTimeStamp : STRING;
+	dtTimestamp: DATE_AND_TIME;
+		
+	fField1    : LREAL := 0;
+	fField2    : LREAL := 2;
+		
+	myPayload		: STRING(2000);
+	(* ================================================= *)
+		
+	
+	(* ================================================= *)
+	(* Subsciption params *)
+	(* ================================================= *)
+	fbMessageQueue : FB_IotMqttMessageQueue;
+	fbMessage      : FB_IotMqttMessage;
+	bSubscribed    : BOOL;
+	sTopicSub      : STRING(255) := 'channels/#####/subscribe/fields/field1'; // #### = channelID
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv      : STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv    : STRING(255);	
+	
+	
+	(* ================================================= *)
+	(* Error handling *)
+	(* ================================================= *)	
+	hrErrorOccurred : HRESULT; // contains the latest occurred error
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+
+// Broker settings for ThingSpeak.com
+IF bSetParameter THEN
+	bSetParameter := FALSE;	
+
+	// general
+	fbMqttClient.sHostName :=  'mqtt.thingspeak.com';  
+	fbMqttClient.nHostPort :=  8883;                    
+	
+	// TLS
+	stTLSconfig.sVersion   :=  'tlsv1.2'; 
+	stTLSconfig.sCA        :=  'C:\TwinCAT\3.1\Config\Certificates\ts_ca.cer';  // thingspeak certificate file
+	fbMqttClient.stTLS     :=  stTLSconfig;
+	
+	// settings for subsciption
+	fbMqttClient.sClientId :=  'TwinCAT_ID_42';	   		// unique ID	
+	fbMqttClient.sUserName :=  'TwinCAT_User';          // don't care
+	fbMqttClient.sUserPassword  := '####'; 			    // MQTT API Key (ThingSpeak.com -> account -> my Profile)
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+	
+END_IF
+
+// connect
+fbMqttClient.Execute(bConnect);
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+
+// Message Queue for incoming data from broker
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+	END_IF
+END_IF
+
+
+// if connected to broker
+IF fbMqttClient.bConnected THEN
+	
+	// set subsciption on sTopicSub
+	IF NOT bSubscribed THEN
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+
+	
+	(* cyclic data publish *)
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN 
+		fbTimer(IN:=FALSE);
+			
+		
+		(* get system time and covnert to ISO 8601 string *)
+		fbGetTime(timeLoDW => fileTime.dwLowDateTime, timeHiDW => fileTime.dwHighDateTime);
+		sTimeStamp := SYSTEMTIME_TO_STRING(FILETIME_TO_SYSTEMTIME(fileTime));
+		
+		(* define payload *)
+		fField1 := fField1 + 2;
+		fField2 := fField2 + 3;
+		
+		(* build thingspeak-payload-string *)	
+		F_Mqtt_ThingSpeak_CreatePayloadStr(ADR(myPayload), SIZEOF(myPayload), 
+											sValueField1:=TO_STRING(fField1),
+											sValueField2:=TO_STRING(fField1), 
+											sValueField3:= '0',
+											sValueField4:= '0',
+											sValueField5:= '0',
+											sValueField6:= '0',
+											sValueField7:= '0',
+											sValueField8:= '0',
+											sLatitude:= '0', 
+											sLongitude:= '0', 
+											sElevation:= '0', 
+											sStatus:= 'status', 
+											sTwitter:= '', 
+											sTweet:= '', 
+											sCreatedAt:= sTimeStamp, 
+											sTimezone:= 'Europe/Berlin' );
+	
+			
+		(* Publish data *)			
+		fbMqttClient.Publish(	sTopic:= sTopicPub, 
+									pPayload:= ADR(myPayload), nPayloadSize:= TO_UDINT(LEN2(ADR(myPayload))), 
+									eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+									
+		publishCounter := publishCounter + 1;										
+								
+	END_IF;
+END_IF;]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="182" Count="94" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

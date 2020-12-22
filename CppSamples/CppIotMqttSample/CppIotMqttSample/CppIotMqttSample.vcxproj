@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(TWINCATSDK)\MsBuild\TwinCAT Common\*.targets" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|TwinCAT OS (x64)">
+      <Configuration>Debug</Configuration>
+      <Platform>TwinCAT OS (x64)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|TwinCAT RT (x64)">
+      <Configuration>Debug</Configuration>
+      <Platform>TwinCAT RT (x64)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|TwinCAT RT (x86)">
+      <Configuration>Debug</Configuration>
+      <Platform>TwinCAT RT (x86)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|TwinCAT UM (x64)">
+      <Configuration>Debug</Configuration>
+      <Platform>TwinCAT UM (x64)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|TwinCAT UM (x86)">
+      <Configuration>Debug</Configuration>
+      <Platform>TwinCAT UM (x86)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|TwinCAT OS (x64)">
+      <Configuration>Release</Configuration>
+      <Platform>TwinCAT OS (x64)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|TwinCAT RT (x64)">
+      <Configuration>Release</Configuration>
+      <Platform>TwinCAT RT (x64)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|TwinCAT RT (x86)">
+      <Configuration>Release</Configuration>
+      <Platform>TwinCAT RT (x86)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|TwinCAT UM (x64)">
+      <Configuration>Release</Configuration>
+      <Platform>TwinCAT UM (x64)</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|TwinCAT UM (x86)">
+      <Configuration>Release</Configuration>
+      <Platform>TwinCAT UM (x86)</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CppIotMqttSampleModule.h" />
+    <ClInclude Include="Iot\TcIotDriversInterfaces.h" />
+    <ClInclude Include="Iot\TcIotDriversServices.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="TcPch.h" />
+    <ClInclude Include="CppIotMqttSampleClassFactory.h" />
+    <ClInclude Include="CppIotMqttSampleCtrl.h" />
+    <ClInclude Include="CppIotMqttSampleDriver.h" />
+    <ClInclude Include="CppIotMqttSampleInterfaces.h" />
+    <ClInclude Include="CppIotMqttSampleServices.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CppIotMqttSampleModule.cpp" />
+    <ClCompile Include="TcPch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x86)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x64)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT OS (x64)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x86)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x64)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT OS (x64)'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="CppIotMqttSampleClassFactory.cpp" />
+    <ClCompile Include="CppIotMqttSampleCtrl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="CppIotMqttSampleDriver.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="CppIotMqttSampleMain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="CppIotMqttSampleW32.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="CppIotMqttSample.rc" />
+    <ResourceCompile Include="CppIotMqttSampleW32.rc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CppIotMqttSampleW32.def" />
+    <None Include="CppIotMqttSample.tmc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="CppIotMqttSampleW32.idl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT OS (x64)'">true</ExcludedFromBuild>
+    </Midl>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{87d9da33-659e-493e-80b4-3e7743a531ab}</ProjectGuid>
+    <RootNamespace>CppIotMqttSample</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <AutomaticRetargetPlatformVersion>true</AutomaticRetargetPlatformVersion>
+    <SccProjectName>SAK</SccProjectName>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x86)'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x86)'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x64)'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x64)'" Label="Configuration">
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT OS (x64)'">
+    <PlatformToolset>v140</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT OS (x64)'">
+    <PlatformToolset>v140</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'" Label="PropertySheets" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'" Label="PropertySheets" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x86)'" Label="PropertySheets" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x86)'" Label="PropertySheets" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'" Label="PropertySheets" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'" Label="PropertySheets" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x64)'" Label="PropertySheets" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x64)'" Label="PropertySheets" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT OS (x64)'">
+    <Import Project="$(TWINCATSDK)\VsProps\TwinCAT OS DynamicDrv.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT OS (x64)'">
+    <Import Project="$(TWINCATSDK)\VsProps\TwinCAT OS DynamicDrv.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x86)'">
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x86)'">
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x86)'">
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x86)'">
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT UM (x64)'">
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT UM (x64)'">
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|TwinCAT RT (x64)'">
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|TwinCAT RT (x64)'">
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

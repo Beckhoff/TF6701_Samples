@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.7">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PrgMqttCom
+VAR
+	fbMqttClient : FB_IotMqttClient;
+	bSetParameter : BOOL := TRUE;
+	bConnect : BOOL := TRUE;
+	
+	(* publish message *)
+	sTopicPub : STRING(255) := 'devices/PlaceYourDeviceIdHere/messages/events/readpipe/'; // Insert DeviceId
+	sPayloadPub : STRING(255);
+	i: UDINT;
+	fbTimer : TON := (PT:=T#1S);
+	
+	(* subscription *)
+	bSubscribed : BOOL;
+	sTopicSub : STRING(255) := 'devices/PlaceYourDeviceIdHere/messages/devicebound/#'; // Insert DeviceId
+	(* received message *)
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv : STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv : STRING(255);
+	fbMessageQueue : FB_IotMqttMessageQueue;
+	fbMessage : FB_IotMqttMessage;	
+	
+	hrErrorOccurred : HRESULT; // contains the latest occurred error
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bSetParameter THEN
+	bSetParameter := FALSE;
+	fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\BaltimoreCyberTrust.crt'; // CA certificate 
+	fbMqttClient.stTLS.sAzureSas := 'PlaceDeviceSasTokenHere'; // Device SAS Token
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+END_IF
+
+fbMqttClient.Execute(bConnect);
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=TRUE);
+	END_IF
+END_IF
+
+IF fbMqttClient.bConnected THEN
+	IF NOT bSubscribed THEN
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtLeastOnceDelivery);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF	
+
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN // publish new payload every second
+		fbTimer(IN:=FALSE);
+		i := i + 1;
+		sPayloadPub := CONCAT('MyMessage', TO_STRING(i));
+		fbMqttClient.Publish(	sTopic:= sTopicPub, 
+								pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub)), 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="109" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="127" Count="1" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="287" Count="2" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="252" Count="5" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="260" Count="1" />
+      <LineId Id="291" Count="2" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="143" Count="5" />
+      <LineId Id="236" Count="1" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="295" Count="2" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

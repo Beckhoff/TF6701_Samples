@@ -1,0 +1,231 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="FB_TestHTTPLegacy" Id="{e664bb97-3ee4-41ee-a51f-132777b7d4c2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TestHTTPLegacy
+VAR
+	fbClient : FB_IotHttpClient;
+	fbRequest: FB_IotHttpRequest;
+	bWithHeader : BOOL;
+	fbHeader: FB_IotHttpHeaderFieldMap;
+	fbJson: FB_JsonDomParser;
+	bSend : BOOL;
+	bContinuous : BOOL;
+	state : UDINT;
+	
+	nResCnt : UDINT;
+	nErrCnt1 : UDINT;
+	nErrCnt2 : UDINT;
+	RisingEdge		: R_TRIG;
+	sContent: STRING(1024);
+	sJson: STRING(1024);
+	sServer : STRING(255);
+	pSndContent : PVOID;
+	nSndContent: UDINT;
+	port : UINT:= 443;
+	reqCount : UDINT;	
+	bJsonRes : BOOL;
+	jsonDoc    : SJsonValue;
+	jsonVal    : SJsonValue;
+		timeout : UDINT :=10000;	
+	invResCount : UDINT := 0;
+	invResValCount : UDINT := 0;
+	resVal:STRING;	
+	valOkCount: UDINT;	
+	(*
+	//http://jsonplaceholder.typicode.com/todos/1
+	sHostName  : STRING(255) :='jsonplaceholder.typicode.com'
+	sUri: STRING(255) := '/todos/1';
+	sCA : STRING(255) := ''; // 'C:\TwinCAT\3.1\Target\Certificates\cloudflare.cer' tls vesrion 1.3 not supported	
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_GET;
+	sSndContent: STRING(255):='';
+	bDynamicContent : BOOL :=FALSE;
+	bJson : BOOL:=FALSE;	
+	*)
+	
+	//http://jsonplaceholder.typicode.com/todos/1
+	sHostName  : STRING(255) :='jsonplaceholder.typicode.com';
+	sUri: STRING(255) := '/posts';
+	sCA : STRING(255) := ''; // 'C:\TwinCAT\3.1\Target\Certificates\cloudflare.cer' tls vesrion 1.3 not supported	
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_POST;
+	sSndContent: STRING(255):='{"title": "test1", "body": "test2", "userId": 2}';
+	bDynamicContent : BOOL :=FALSE;
+	bJson : BOOL:=TRUE;
+	(*
+	//https://postman-echo.com/get?foo1=bar1&foo2=bar2
+	sHostName : STRING(255) := 'postman-echo.com';
+	sUri: STRING(255) := '/get?foo1=bar1&foo2=bar2'; //	https://postman-echo.com/get?foo1=bar1&foo2=bar2
+	sCA : STRING(255) := 'C:\TwinCAT\3.1\Target\Certificates\amazon.cer';
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_GET;
+	sSndContent: STRING(255):='';
+	bDynamicContent : BOOL :=FALSE;
+	bJson : BOOL:=FALSE;
+	*)
+	
+	//https://postman-echo.com/get?foo1=bar1&foo2=bar2
+	(*
+	sHostName : STRING(255) := 'postman-echo.com';
+	sCA : STRING(255) := 'C:\TwinCAT\3.1\Target\Certificates\amazon.cer';
+	sUri: STRING(255) := '/post'; //	https://postman-echo.com/post
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_POST;
+	bDynamicContent : BOOL :=TRUE;	
+	bJson : BOOL:=FALSE;
+	sSndContent: STRING(255):='';
+	*)
+	
+	//https://api.openweathermap.org/data/2.5/weather?q=London,uk&APPID=0844c0a29ad58753b478183254b1eb89
+	(*sHostName : STRING(255) := 'api.openweathermap.org';
+	sUri: STRING(255) := '/data/2.5/weather?q=London,uk&APPID=0844c0a29ad58753b478183254b1eb89';
+	sCA : STRING(255) := 'C:\TwinCAT\3.1\Target\Certificates\weathermap.cer';
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_GET;
+	sSndContent: STRING(255):='';
+	bDynamicContent : BOOL :=FALSE;
+	bJson : BOOL:=FALSE;
+	*)
+	
+	(*
+	sHostName : STRING(255) := '192.168.1.8';
+	sUri: STRING(255) := '/index';
+	sCA : STRING(255) := 'C:\TwinCAT\3.1\Target\Certificates\cx9020.cer';
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_GET;
+	sSndContent: STRING(255):='';
+	bDynamicContent : BOOL :=FALSE;	
+	bJson : BOOL:=FALSE;
+	*)
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[RisingEdge( CLK:= bSend );
+CASE state OF
+0:
+	fbClient.nConnectTimeout := timeout;
+	fbClient.sHostName := sHostName;
+	fbClient.bKeepAlive := TRUE;
+	IF LEN(STR:=sCA) = 0 THEN
+		port:= 80;	
+	END_IF
+	fbClient.nHostPort := port;
+	IF port = 443 THEN
+		fbClient.stTLS.sCA :=  sCA;
+	END_IF			
+	fbHeader.AddField(sField:='MyField', sValue:='MyFieldValue', bAppendValue:= FALSE);
+	IF fbClient.bConfigured THEN
+		fbClient.Disconnect();
+	END_IF	 
+	state:=1;
+1:	
+	IF fbClient.bConfigured AND (RisingEdge.Q OR bContinuous) THEN 
+		sServer:='';
+		IF bJson THEN
+			fbJson.NewDocument();
+			jsonDoc := fbJson.GetDocumentRoot();
+			fbJson.AddStringMember(jsonDoc, 'title', 'test1');
+			fbJson.AddStringMember(jsonDoc, 'body', 'test2');
+			fbJson.AddUintMember(jsonDoc, 'userId', reqCount);
+			IF NOT bWithHeader THEN
+				IF fbRequest.SendJsonDomRequest(sUri:=sUri, fbClient:=fbClient, eRequestType:=eRequestType, fbJson, 0) THEN				
+					state := 2;
+					reqCount:=reqCount+1;
+				END_IF
+			ELSE
+				IF fbRequest.SendJsonDomRequest(sUri:=sUri, fbClient:=fbClient, eRequestType:=eRequestType, fbJson, fbHeader) THEN				
+					state := 2;
+					reqCount:=reqCount+1;
+				END_IF
+			END_IF
+		ELSE
+			IF bDynamicContent THEN 
+				//sSndContent := CONCAT('Test', UDINT_TO_STRING(reqCount));
+				sSndContent := UDINT_TO_STRING(reqCount);
+			END_IF
+			nSndContent := TO_UDINT(LEN(sSndContent));
+			IF nSndContent > 0 THEN
+				pSndContent := ADR(sSndContent);
+			ELSE
+				pSndContent := NULL;
+			END_IF
+			IF NOT bWithHeader THEN			
+				IF fbRequest.SendRequest(sUri:=sUri, fbClient:=fbClient, eRequestType:=eRequestType, pContent:=pSndContent, nContentSize:=nSndContent, 0) THEN				
+					state := 2;
+					reqCount:=reqCount+1;
+				END_IF
+			ELSE  
+				IF fbRequest.SendRequest(sUri:=sUri, fbClient:=fbClient, eRequestType:=eRequestType, pContent:=pSndContent, nContentSize:=nSndContent, fbHeader) THEN				
+					state := 2;
+					reqCount:=reqCount+1;
+				END_IF
+			END_IF
+		END_IF
+	END_IF
+2:
+	IF NOT fbRequest.bBusy THEN
+			IF NOT fbRequest.bError THEN
+				jsonDoc := fbRequest.GetJsonDomContent(fbJson);				
+				IF  jsonDoc <> 0 THEN
+					bJsonRes := TRUE;
+					fbJson.CopyDocument(sJson, SIZEOF(sJson)-1);
+				ELSE
+					bJsonRes := FALSE;
+				END_IF					
+				fbRequest.GetContent(pContent:=ADR(sContent), nContentSize:=SIZEOF(sContent)-1, bSetNullTermination:=TRUE);	
+				fbRequest.GetHeaderField('server', ADR(sServer), SIZEOF(sServer));
+					
+				IF fbRequest.nStatusCode >= 200 AND fbRequest.nStatusCode < 300 THEN
+					IF bDynamicContent OR bJson THEN
+						IF bJsonRes THEN
+						(* expected: '{"args":{},"data":"xxx(x=reqCount)","files":{},"form":{},"headers":{"x-forwarded-proto":"https","host":"postman-echo.com","content-length":"5","accept-encoding":"identity","content-type":"text/html; charset=UTF-8","user-agent":"TcHttpClient","x-forwarded-port":"443"},"json":null,"url":"https://postman-echo.com/post"}'*)								 								
+							IF fbJson.HasMember(jsonDoc, 'data')  THEN
+								jsonVal := fbJson.FindMember(jsonDoc, 'data');
+								resVal:=fbJson.GetString(jsonVal);
+								IF STRING_TO_UDINT(resVal)+1 = reqCount THEN
+									valOkCount:=valOkCount+1;
+								ELSE
+									invResValCount:=invResValCount+1;
+								END_IF
+							ELSIF fbJson.HasMember(jsonDoc, 'userId')  THEN
+								jsonVal := fbJson.FindMember(jsonDoc, 'userId');
+								IF fbJson.GetUint(jsonVal)+1 = reqCount THEN
+									valOkCount:=valOkCount+1;
+								ELSE
+									invResValCount:=invResValCount+1;
+								END_IF
+							ELSE 
+								invResCount:=invResCount+1;	
+							END_IF
+						ELSE
+							invResCount:=invResCount+1;
+						END_IF
+					END_IF
+					nResCnt:=nResCnt+1;
+				ELSE
+					nErrCnt1:=nErrCnt1+1;					
+				END_IF				
+			ELSE
+				nErrCnt2:=nErrCnt2+1;
+			END_IF
+			state :=1;				
+	END_IF  	
+END_CASE
+fbClient.Execute();
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TestHTTPLegacy">
+      <LineId Id="99" Count="12" />
+      <LineId Id="114" Count="13" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="128" Count="3" />
+      <LineId Id="298" Count="0" />
+      <LineId Id="294" Count="2" />
+      <LineId Id="293" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="132" Count="5" />
+      <LineId Id="303" Count="1" />
+      <LineId Id="306" Count="1" />
+      <LineId Id="305" Count="0" />
+      <LineId Id="138" Count="5" />
+      <LineId Id="308" Count="2" />
+      <LineId Id="147" Count="54" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

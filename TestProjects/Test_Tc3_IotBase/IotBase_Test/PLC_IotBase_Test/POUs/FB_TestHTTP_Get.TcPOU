@@ -1,0 +1,118 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="FB_TestHTTP_Get" Id="{ee9d7763-31c2-4203-948c-32ffe0d118d7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TestHTTP_Get
+VAR_INPUT
+	fbClient : REFERENCE TO FB_IotHttpClient;
+END_VAR
+VAR
+	
+	fbRequest: FB_IotHttpRequest;
+	fbJson: FB_JsonDomParser;
+	bSend : BOOL;
+	bContinuous : BOOL;
+	state : UDINT;
+	
+	RisingEdge		: R_TRIG;
+	
+	sJson: STRING(300);		
+	sContent1: STRING(291);
+	bGetContent1 : BOOL;
+	nContent1 : UDINT;
+	
+	bJsonRes : BOOL;
+	jsonDoc    : SJsonValue;
+	jsonVal    : SJsonValue;
+		
+	reqCount : UDINT;		
+	invResCount : UDINT := 0;
+	invResValCount : UDINT := 0;
+	resVal:STRING;
+	nResCnt : UDINT;
+	nErrCnt1 : UDINT;
+	nErrCnt2 : UDINT;
+		
+	valOkCount: UDINT;	
+	
+	sUri: STRING(255) := '/posts';
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_Get;		
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[RisingEdge( CLK:= bSend );
+CASE state OF
+0:	
+	IF fbClient.bConfigured AND (RisingEdge.Q OR bContinuous) THEN 
+		IF fbRequest.SendRequest(sUri:=sUri, fbClient:=fbClient, eRequestType:=eRequestType, 0, 0, 0) THEN				
+			state := 1;
+			reqCount:=reqCount+1;
+		END_IF					
+	END_IF
+1:
+	IF NOT fbRequest.bBusy THEN
+			IF NOT fbRequest.bError THEN				 
+				jsonDoc := fbRequest.GetJsonDomContent(fbJson);
+				IF  jsonDoc <> 0 THEN
+					bJsonRes := TRUE;
+					fbJson.CopyDocument(sJson, SIZEOF(sJson)-1);
+				ELSE
+					bJsonRes := FALSE;
+				END_IF					
+				bGetContent1 := fbRequest.GetContent(pContent:=ADR(sContent1), nContentSize:=SIZEOF(sContent1), bSetNullTermination:=TRUE);
+				nContent1:= LEN2(ADR(sContent1));
+				IF fbRequest.nStatusCode >= 200 AND fbRequest.nStatusCode < 300 THEN
+					IF bJsonRes THEN													 								
+						IF fbJson.IsArray(jsonDoc) AND fbJson.GetArraySize(jsonDoc) > 0 THEN
+							jsonVal := fbJson.GetArrayValueByIdx(jsonDoc, 0);
+							IF fbJson.HasMember(jsonVal, 'id')  THEN							
+								jsonVal := fbJson.FindMember(jsonVal, 'id');
+								IF fbJson.GetUint(jsonVal) = 1 THEN
+									valOkCount:=valOkCount+1;
+								ELSE
+									invResValCount:=invResValCount+1;
+								END_IF
+							ELSE 
+								invResCount:=invResCount+1;	
+						END_IF
+						ELSE 
+							invResCount:=invResCount+1;	
+						END_IF
+					ELSE
+						invResCount:=invResCount+1;
+					END_IF					
+					nResCnt:=nResCnt+1;
+				ELSE
+					nErrCnt1:=nErrCnt1+1;					
+				END_IF				
+			ELSE
+				nErrCnt2:=nErrCnt2+1;
+			END_IF
+			state :=0;				
+	END_IF  	
+END_CASE
+fbClient.Execute();
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TestHTTP_Get">
+      <LineId Id="99" Count="2" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="129" Count="2" />
+      <LineId Id="150" Count="3" />
+      <LineId Id="494" Count="0" />
+      <LineId Id="155" Count="5" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="619" Count="0" />
+      <LineId Id="164" Count="1" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="528" Count="0" />
+      <LineId Id="530" Count="0" />
+      <LineId Id="177" Count="5" />
+      <LineId Id="532" Count="1" />
+      <LineId Id="531" Count="0" />
+      <LineId Id="183" Count="5" />
+      <LineId Id="190" Count="11" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

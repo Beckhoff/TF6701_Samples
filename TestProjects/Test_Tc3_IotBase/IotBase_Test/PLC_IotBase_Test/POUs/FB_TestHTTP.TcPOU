@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="FB_TestHTTP" Id="{03047795-7005-4f09-ae5b-cb21e8bb6e1c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TestHTTP
+VAR
+	fbClient : FB_IotHttpClient;
+	fbRequest: FB_IotHttpRequest;
+	fbHeader: FB_IotHttpHeaderFieldMap;
+	state : UDINT;
+	timeout : UDINT :=10000;
+	port : UINT:= 443;
+		
+	//http://jsonplaceholder.typicode.com/todos/1
+	sHostName  : STRING(255) :='jsonplaceholder.typicode.com';
+	sCA : STRING(255) := ''; // 'C:\TwinCAT\3.1\Target\Certificates\cloudflare.cer' tls vesrion 1.3 not supported
+
+	fbMqtt_Post: FB_TestHTTP_Post;
+	fbMqtt_Get: FB_TestHTTP_Get;
+	fbMqtt_Get2: FB_TestHTTP_Get2;	
+	fbMqtt_Put: FB_TestHTTP_Put;
+	fbMqtt_Patch: FB_TestHTTP_Patch;
+	fbMqtt_Trace: FB_TestHTTP_Trace;	
+	fbMqtt_Head: FB_TestHTTP_Head;
+	fbMqtt_Options: FB_TestHTTP_Options;
+	fbMqtt_Delete: FB_TestHTTP_Delete;
+	fbMqtt_Connect: FB_TestHTTP_Connect;			
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE state OF
+0:
+	fbClient.nConnectTimeout := timeout;
+	fbClient.sHostName := sHostName;
+	fbClient.bKeepAlive := TRUE;
+	IF LEN(STR:=sCA) = 0 THEN
+		port:= 80;	
+	END_IF
+	fbClient.nHostPort := port;
+	IF port = 443 THEN
+		fbClient.stTLS.sCA :=  sCA;
+	END_IF			
+	fbHeader.AddField(sField:='MyField', sValue:='MyFieldValue', bAppendValue:= FALSE);
+	IF fbClient.bConfigured THEN
+		fbClient.Disconnect();
+	END_IF	 
+	state:=1;
+1:	
+	IF fbClient.bConfigured THEN 
+		fbMqtt_Get(fbClient:=fbClient);
+		fbMqtt_Get2(fbClient:=fbClient);
+		fbMqtt_Post(fbClient:=fbClient);
+		fbMqtt_Put(fbClient:=fbClient);
+		fbMqtt_Patch(fbClient:=fbClient);
+		fbMqtt_Trace(fbClient:=fbClient);
+		fbMqtt_Head(fbClient:=fbClient);
+		fbMqtt_Options(fbClient:=fbClient);
+		fbMqtt_Delete(fbClient:=fbClient);
+		fbMqtt_Connect(fbClient:=fbClient);
+	END_IF  	
+END_CASE
+fbClient.Execute();
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TestHTTP">
+      <LineId Id="100" Count="11" />
+      <LineId Id="114" Count="5" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="500" Count="0" />
+      <LineId Id="554" Count="0" />
+      <LineId Id="516" Count="1" />
+      <LineId Id="526" Count="5" />
+      <LineId Id="499" Count="0" />
+      <LineId Id="199" Count="2" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

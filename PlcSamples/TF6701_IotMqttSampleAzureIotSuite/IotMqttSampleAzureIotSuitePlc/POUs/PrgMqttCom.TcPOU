@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PrgMqttCom
+VAR
+	fbMqttClient 		: FB_IotMqttClient;
+	bSetParameter 		: BOOL := TRUE;
+	bDeviceTwinSent		: BOOL := FALSE;
+	bConnect 			: BOOL := TRUE;
+	
+  	(* JSON document *)
+	sJsonDoc 			: STRING(255);
+	sJsonDocDeviceInfo 	: STRING(255);
+	
+	(* publish message *)
+	sTopicPubData 		: STRING(255);
+	sTopicPubDeviceTwin : STRING(255);
+	sPayloadPub 		: STRING(255);
+	nPublishedMessages	: UDINT;
+	fbTimer 			: TON := (PT:=T#5S);
+
+	(* Received messages *)
+	fbMessageQueue		: FB_IotMqttMessageQueue;
+	fbMessage			: FB_IotMqttMessage;
+	{attribute 'TcEncoding':='UTF-8'}
+	sReceivedTopic		: STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sReceivedPayload	: STRING(255);
+	
+	(* Azure DeviceTwin: received status code messages *)
+	bSubscribedDeviceTwinStatusCodes	: BOOL;
+	sTopicSubDeviceTwinStatusCodes		: STRING(255);
+	
+	(* Azure DeviceTwin: Desired property changes *)
+	bSubscribedDeviceTwinDesiredChange	: BOOL;
+	sTopicSubDeviceTwinDesiredChange	: STRING(255);
+	bReceivedDesiredPropertyChange		: BOOL;
+
+	hrErrorOccurred : HRESULT; // contains the latest occurred error
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bSetParameter THEN
+	bSetParameter := FALSE;
+	
+	(* Prepare topics for data publish and Azure Device Twin *)
+	sTopicPubData 						:= F_GetPublisherTopic(GVL.sDeviceId);
+	sTopicPubDeviceTwin 				:= F_DeviceTwin_GetPublisherTopic();
+	sTopicSubDeviceTwinStatusCodes 		:= F_DeviceTwin_GetSubscriberTopicStatusCodes();
+	sTopicSubDeviceTwinDesiredChange 	:= F_DeviceTwin_GetSubscriberTopicDesired();
+	
+	(* Prepapre Azure IoT Hub connection *)
+	fbMqttClient.stTLS.sCA 				:= 'c:\TwinCAT\3.1\Config\Certificates\azure.crt';
+	fbMqttClient.stTLS.sAzureSas 		:= GVL.sAzureSasToken;
+
+	(* Prepare message queue for received messages *)	
+	fbMqttClient.ipMessageQueue 		:= fbMessageQueue;	
+END_IF
+
+fbMqttClient.Execute(bConnect);
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+(* Check message queue for new incoming messages *)
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	(* Get first element of message queue and process it *)
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		(* Get topic on which the message has been received *) 
+		fbMessage.GetTopic(pTopic:=ADR(sReceivedTopic), nTopicSize:=SIZEOF(sReceivedTopic) );
+		(* Get message itself *)
+		fbMessage.GetPayload(pPayload:=ADR(sReceivedPayload), nPayloadSize:=SIZEOF(sReceivedPayload), bSetNullTermination:=FALSE);		
+		(* Check if received message is a desired property change *)
+		IF F_DeviceTwin_IsDesiredTopic(sReceivedTopic) THEN
+			bReceivedDesiredPropertyChange := TRUE;
+			(* ... now do something with the received property change ...
+			   The variable sReceivedPayload now contains the desired property change as JSON *)
+			   
+	  	END_IF
+	END_IF
+END_IF
+
+IF fbMqttClient.bConnected THEN
+	(* Subscribe to Device Twin status response topic *)
+	IF NOT bSubscribedDeviceTwinStatusCodes THEN
+		bSubscribedDeviceTwinStatusCodes := fbMqttClient.Subscribe(sTopic:=sTopicSubDeviceTwinStatusCodes, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	ELSE
+		(* Send Device Twin information once during startup *)
+		IF NOT bDeviceTwinSent THEN
+			bDeviceTwinSent := TRUE;
+			sJsonDocDeviceInfo := F_DeviceTwin_GetReportedProperties();
+			fbMqttClient.Publish(	sTopic:= sTopicPubDeviceTwin, 
+									pPayload:= ADR(sJsonDocDeviceInfo), nPayloadSize:= TO_UDINT(LEN(sJsonDocDeviceInfo)), 
+									eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+			IF fbMqttClient.bError THEN
+				// add your error logging here
+				hrErrorOccurred := fbMqttClient.hrErrorCode;
+			END_IF
+	    END_IF
+	END_IF
+  
+	(* Subscribe to Device Twin desired property changes *)
+	IF NOT bSubscribedDeviceTwinDesiredChange THEN
+		bSubscribedDeviceTwinDesiredChange := fbMqttClient.Subscribe(sTopic:=sTopicSubDeviceTwinDesiredChange, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+    END_IF
+	
+	(* Publish data every five seconds *)
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN
+		fbTimer(IN:=FALSE);
+		(* Generated data *)	
+		sJsonDoc := F_GenerateData();
+		(* Publish created JSON document to Azure IoT Hub *)		
+		fbMqttClient.Publish(	sTopic:= sTopicPubData, 
+								pPayload:= ADR(sJsonDoc), nPayloadSize:= TO_UDINT(LEN(sJsonDoc)), 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF								
+		nPublishedMessages := nPublishedMessages + 1;
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="109" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="615" Count="0" />
+      <LineId Id="517" Count="0" />
+      <LineId Id="509" Count="2" />
+      <LineId Id="613" Count="1" />
+      <LineId Id="518" Count="0" />
+      <LineId Id="479" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="625" Count="0" />
+      <LineId Id="461" Count="0" />
+      <LineId Id="127" Count="1" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="669" Count="2" />
+      <LineId Id="668" Count="0" />
+      <LineId Id="628" Count="0" />
+      <LineId Id="463" Count="0" />
+      <LineId Id="465" Count="0" />
+      <LineId Id="629" Count="0" />
+      <LineId Id="466" Count="0" />
+      <LineId Id="630" Count="0" />
+      <LineId Id="467" Count="0" />
+      <LineId Id="631" Count="0" />
+      <LineId Id="468" Count="0" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="620" Count="0" />
+      <LineId Id="618" Count="0" />
+      <LineId Id="623" Count="1" />
+      <LineId Id="632" Count="0" />
+      <LineId Id="619" Count="0" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="464" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="514" Count="0" />
+      <LineId Id="471" Count="1" />
+      <LineId Id="673" Count="2" />
+      <LineId Id="672" Count="0" />
+      <LineId Id="475" Count="0" />
+      <LineId Id="513" Count="0" />
+      <LineId Id="476" Count="0" />
+      <LineId Id="508" Count="0" />
+      <LineId Id="516" Count="0" />
+      <LineId Id="504" Count="1" />
+      <LineId Id="477" Count="0" />
+      <LineId Id="677" Count="2" />
+      <LineId Id="676" Count="0" />
+      <LineId Id="478" Count="0" />
+      <LineId Id="470" Count="0" />
+      <LineId Id="474" Count="0" />
+      <LineId Id="616" Count="0" />
+      <LineId Id="602" Count="1" />
+      <LineId Id="681" Count="2" />
+      <LineId Id="680" Count="0" />
+      <LineId Id="604" Count="0" />
+      <LineId Id="601" Count="0" />
+      <LineId Id="512" Count="0" />
+      <LineId Id="144" Count="2" />
+      <LineId Id="556" Count="0" />
+      <LineId Id="418" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="236" Count="1" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="685" Count="2" />
+      <LineId Id="684" Count="0" />
+      <LineId Id="436" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

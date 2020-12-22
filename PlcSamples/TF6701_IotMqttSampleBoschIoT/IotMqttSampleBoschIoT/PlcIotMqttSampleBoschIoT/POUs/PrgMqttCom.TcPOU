@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PrgMqttCom
+VAR
+	(* MQTT Client *)
+	fbMqttClient 			: FB_IotMqttClient;
+	bSetParameter 			: BOOL := TRUE;
+	bConnect 				: BOOL := TRUE;
+	
+	(* published message *)
+	sPublishTopic			: STRING(255) := 'telemetry';
+	fbTimer 				: TON := (PT:=T#1S);
+	fbRandom				: DRAND;
+	lrRandom				: LREAL;
+	fbFunctionGenerator1	: FB_FunctionGenerator;
+	fSetFrequency       	: LREAL := 1; // Hz	
+	fSetAmplitude       	: LREAL  := 10; // e.g. volts
+	aBuffer					: ARRAY [1..cOverSamples] OF LREAL;		
+	
+	(* topic subscribtion *)
+	bSubscribed : BOOL;
+	sTopicSub : STRING(255) := 'control/+/+/req/#';
+
+	(* received message *)	
+	fbMessageQueue 			: FB_IotMqttMessageQueue;
+	fbMessage 				: FB_IotMqttMessage;
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv 				: STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv 			: STRING(255);
+	
+	(* JSON *)
+	fbJson 					: FB_JsonSaxWriter;
+	sPayload 				: STRING(1000);
+	
+	hrErrorOccurred 		: HRESULT; // contains the latest occurred error
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bSetParameter THEN
+	bSetParameter := FALSE;
+	(* TLS settings for Bosch IoT Hub connection *)
+	fbMqttClient.stTLS.sCA := 'C:\TwinCAT\3.1\Config\Certificates\Bosch\BoschIotHub.crt';
+	(* Broker settings für Bosch IoT Hub *)
+	fbMqttClient.sHostName:= 'mqtt.bosch-iot-hub.com';
+	fbMqttClient.nHostPort:= 8883;
+	fbMqttClient.sClientId:= 'CX-12345'; 
+	fbMqttClient.sTopicPrefix:= ''; 
+	fbMqttClient.sUserName:= 'com.someName_CX@t42c3e689c5c64c34b13084b9504ed3c8_hub';
+	fbMqttClient.sUserPassword:= 'somePassword';
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+END_IF
+
+fbMqttClient.Execute(bConnect);
+IF fbMqttClient.bError THEN
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+	END_IF
+END_IF
+
+fbFunctionGenerator1(	fFrequency 	:= fSetFrequency,
+						fAmplitude 	:= fSetAmplitude,
+						eFunction 	:= E_FunctionType.eSine,
+						aSignal		:= aBuffer);
+fbRandom(Seed := 1, Num => lrRandom);
+lrRandom := lrRandom * 10;
+
+IF fbMqttClient.bConnected THEN
+	IF NOT bSubscribed THEN
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+		IF fbMqttClient.bError THEN
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN
+		fbTimer(IN:=FALSE);
+		
+		fbJson.StartObject();
+		fbJson.AddKey('GroupName');
+		fbJson.AddString('CX_BoschIoTDemo');
+		fbJson.AddKey('Sensor1');
+		fbJson.AddReal(lrRandom);
+		fbJson.AddKey('Sensor2');
+		fbJson.AddReal(aBuffer[1]);
+		fbJson.EndObject();
+		sPayload := fbJson.GetDocument();
+		fbJson.ResetDocument();
+		
+		fbMqttClient.Publish(	sTopic:= sPublishTopic, 
+								pPayload:= ADR(sPayload), nPayloadSize:= LEN2(ADR(sPayload)), 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+								
+		IF fbMqttClient.bError THEN
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="235" Count="1" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="304" Count="0" />
+      <LineId Id="244" Count="4" />
+      <LineId Id="374" Count="1" />
+      <LineId Id="250" Count="3" />
+      <LineId Id="334" Count="2" />
+      <LineId Id="254" Count="5" />
+      <LineId Id="405" Count="0" />
+      <LineId Id="408" Count="2" />
+      <LineId Id="406" Count="1" />
+      <LineId Id="484" Count="0" />
+      <LineId Id="260" Count="3" />
+      <LineId Id="338" Count="1" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="265" Count="3" />
+      <LineId Id="423" Count="6" />
+      <LineId Id="436" Count="1" />
+      <LineId Id="422" Count="0" />
+      <LineId Id="421" Count="0" />
+      <LineId Id="270" Count="2" />
+      <LineId Id="439" Count="0" />
+      <LineId Id="341" Count="1" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

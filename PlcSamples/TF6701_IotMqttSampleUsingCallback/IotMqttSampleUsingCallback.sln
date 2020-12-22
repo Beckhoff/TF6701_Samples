@@ -1,0 +1,63 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{B1E792BE-AA5F-4E3C-8C82-674BF9C0715B}") = "IotMqttSampleUsingCallback", "IotMqttSampleUsingCallback.tsproj", "{9B4FF7A5-72AE-487E-8165-85FE38D11730}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D44E31B5-5BCE-449E-AD40-16084525E745}"
+	ProjectSection(SolutionItems) = preProject
+		IotMqttSampleUsingCallback.tszip = IotMqttSampleUsingCallback.tszip
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|TwinCAT CE7 (ARMV7) = Debug|TwinCAT CE7 (ARMV7)
+		Debug|TwinCAT RT (x64) = Debug|TwinCAT RT (x64)
+		Debug|TwinCAT RT (x86) = Debug|TwinCAT RT (x86)
+		Release|TwinCAT CE7 (ARMV7) = Release|TwinCAT CE7 (ARMV7)
+		Release|TwinCAT RT (x64) = Release|TwinCAT RT (x64)
+		Release|TwinCAT RT (x86) = Release|TwinCAT RT (x86)
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Debug|TwinCAT CE7 (ARMV7).ActiveCfg = Debug|TwinCAT CE7 (ARMV7)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Debug|TwinCAT CE7 (ARMV7).Build.0 = Debug|TwinCAT CE7 (ARMV7)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Debug|TwinCAT RT (x64).ActiveCfg = Debug|TwinCAT RT (x64)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Debug|TwinCAT RT (x64).Build.0 = Debug|TwinCAT RT (x64)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Debug|TwinCAT RT (x86).ActiveCfg = Debug|TwinCAT RT (x86)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Debug|TwinCAT RT (x86).Build.0 = Debug|TwinCAT RT (x86)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Release|TwinCAT CE7 (ARMV7).ActiveCfg = Release|TwinCAT CE7 (ARMV7)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Release|TwinCAT CE7 (ARMV7).Build.0 = Release|TwinCAT CE7 (ARMV7)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Release|TwinCAT RT (x64).ActiveCfg = Release|TwinCAT RT (x64)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Release|TwinCAT RT (x64).Build.0 = Release|TwinCAT RT (x64)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Release|TwinCAT RT (x86).ActiveCfg = Release|TwinCAT RT (x86)
+		{9B4FF7A5-72AE-487E-8165-85FE38D11730}.Release|TwinCAT RT (x86).Build.0 = Release|TwinCAT RT (x86)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Debug|TwinCAT CE7 (ARMV7).ActiveCfg = Debug|TwinCAT CE7 (ARMV7)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Debug|TwinCAT CE7 (ARMV7).Build.0 = Debug|TwinCAT CE7 (ARMV7)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Debug|TwinCAT RT (x64).ActiveCfg = Debug|TwinCAT RT (x64)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Debug|TwinCAT RT (x64).Build.0 = Debug|TwinCAT RT (x64)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Debug|TwinCAT RT (x86).ActiveCfg = Debug|TwinCAT RT (x86)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Debug|TwinCAT RT (x86).Build.0 = Debug|TwinCAT RT (x86)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Release|TwinCAT CE7 (ARMV7).ActiveCfg = Release|TwinCAT CE7 (ARMV7)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Release|TwinCAT CE7 (ARMV7).Build.0 = Release|TwinCAT CE7 (ARMV7)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Release|TwinCAT RT (x64).ActiveCfg = Release|TwinCAT RT (x64)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Release|TwinCAT RT (x64).Build.0 = Release|TwinCAT RT (x64)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Release|TwinCAT RT (x86).ActiveCfg = Release|TwinCAT RT (x86)
+		{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}.Release|TwinCAT RT (x86).Build.0 = Release|TwinCAT RT (x86)
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://nt-teamfd02:8080/tfs/defaultcollection
+		SccProjectUniqueName0 = PlcIotMqttSampleUsingCallback\\PlcIotMqttSampleUsingCallback.plcproj
+		SccProjectTopLevelParentUniqueName0 = IotMqttSampleMessageCallback.tsproj
+		SccProjectName0 = PlcIotMqttSampleUsingCallback
+		SccLocalPath0 = PlcIotMqttSampleUsingCallback
+		SccLocalPath1 = .
+		SccProjectUniqueName2 = IotMqttSampleUsingCallback.tsproj
+		SccLocalPath2 = .
+	EndGlobalSection
+EndGlobal

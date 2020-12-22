@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="FB_TestHTTP_Head" Id="{ea1d8295-f351-4741-a791-0797213049c4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TestHTTP_Head
+VAR_INPUT
+	fbClient : REFERENCE TO FB_IotHttpClient;
+END_VAR
+VAR	
+	fbRequest: FB_IotHttpRequest;
+	fbJson: FB_JsonDomParser;
+	bSend : BOOL;
+	bContinuous : BOOL;
+	state : UDINT;
+	
+	RisingEdge		: R_TRIG;	
+	sContentLen: STRING(256);	
+	
+	bJsonRes : BOOL;
+	jsonDoc    : SJsonValue;
+	jsonVal    : SJsonValue;
+		
+	reqCount : UDINT;		
+	invResCount : UDINT := 0;
+	invResValCount : UDINT := 0;
+	resVal:STRING;
+	nResCnt : UDINT;
+	nErrCnt1 : UDINT;
+	nErrCnt2 : UDINT;
+		
+	valOkCount: UDINT;
+	
+	//http://jsonplaceholder.typicode.com/todos/1
+	sUri: STRING(255) := '/posts/1';
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_HEAD;		
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[RisingEdge( CLK:= bSend );
+CASE state OF
+0:		
+	IF fbClient.bConfigured AND (RisingEdge.Q OR bContinuous) THEN 
+		IF fbRequest.SendRequest(sUri:=sUri, fbClient:=fbClient, eRequestType:=eRequestType, 0, 0, 0) THEN				
+			state := 1;
+			reqCount:=reqCount+1;
+		END_IF					
+	END_IF
+1:
+	IF NOT fbRequest.bBusy THEN
+			IF NOT fbRequest.bError THEN				 
+				IF fbRequest.GetHeaderField('Content-Length', ADR(sContentLen), SIZEOF(sContentLen)) THEN 
+					IF STRING_TO_UDINT(sContentLen) = 292 THEN
+						valOkCount:=valOkCount+1;
+					ELSE
+						invResValCount:=invResValCount+1;
+					END_IF
+				ELSE
+					invResCount:=invResCount+1;
+				END_IF
+			ELSE
+				nErrCnt2:=nErrCnt2+1;
+			END_IF
+			state :=0;				
+	END_IF  	
+END_CASE
+fbClient.Execute();
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TestHTTP_Head">
+      <LineId Id="99" Count="2" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="129" Count="2" />
+      <LineId Id="150" Count="3" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="662" Count="3" />
+      <LineId Id="661" Count="0" />
+      <LineId Id="666" Count="2" />
+      <LineId Id="659" Count="1" />
+      <LineId Id="658" Count="0" />
+      <LineId Id="197" Count="4" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

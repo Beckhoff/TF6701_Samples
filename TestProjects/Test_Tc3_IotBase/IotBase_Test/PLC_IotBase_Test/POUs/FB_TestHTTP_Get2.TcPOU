@@ -1,0 +1,267 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="FB_TestHTTP_Get2" Id="{674271d5-b77c-46d2-b357-2b82c18fe176}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TestHTTP_Get2 (*checks GetContent *)
+VAR_INPUT
+	fbClient : REFERENCE TO FB_IotHttpClient;
+END_VAR
+VAR
+	
+	fbRequest: FB_IotHttpRequest;
+	fbJson: FB_JsonDomParser;
+	bSend : BOOL;
+	bContinuous : BOOL;
+	state : UDINT;
+	
+	RisingEdge		: R_TRIG;
+	
+	sJson: STRING(300);
+	
+	bGetContent1 : BOOL;
+	bGetContent2 : BOOL;
+	bGetContent3 : BOOL;
+	bGetContent4 : BOOL;
+	bGetContent5 : BOOL;					
+	sContent1: STRING(291);
+	sContent2: STRING(292);
+	sContent3: STRING(293);	
+	sContent4: STRING(5);
+	sContent5: STRING(300) := '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789x';
+	sTest:String := '123';
+	nContent1: UDINT;
+	nContent2: UDINT;
+	nContent3: UDINT;
+	nContent4: UDINT;
+	nFind1:UDINT;
+	nFind2:UDINT;
+	nFind3:UDINT;
+	nFind4:UDINT;
+	nFind5:UDINT;
+	nLenT1:UDINT;
+	nLen2T1:INT;
+	sT1: STRING(3) :='123';
+	
+	sServer: STRING(10) := 'cloudflare';
+	sServer1: STRING(9);
+	sServer2: STRING(10);
+	sServer3: STRING(11);
+	lenSrv1 : UDINT;
+	lenSrv2 : UDINT;
+	lenSrv3 : UDINT;
+	findSrv1 : UDINT;
+	findSrv2 : UDINT;
+	findSrv3 : UDINT;
+	findSrv4 : UDINT;
+	bGetSrv1: BOOL;
+	bGetSrv2: BOOL;	
+	bGetSrv3: BOOL;
+	
+	
+	
+	nSizeT1 : UDINT; 
+	testCnt1:UDINT;
+	testCnt2:UDINT;
+	
+	bJsonRes : BOOL;
+	jsonDoc    : SJsonValue;
+	jsonVal    : SJsonValue;
+		
+	reqCount : UDINT;		
+	invResCount : UDINT := 0;
+	invResValCount : UDINT := 0;
+	resVal:STRING;
+	nResCnt : UDINT;
+	nErrCnt1 : UDINT;
+	nErrCnt2 : UDINT;
+	nErrCnt3 : UDINT;
+	nErrCnt4 : UDINT;
+		
+	valOkCount: UDINT;	
+	
+	sUri: STRING(255) := '/posts/1';
+	eRequestType : ETcIotHttpRequestType := ETcIotHttpRequestType.HTTP_Get;	
+	sContent: INT;
+	
+	pByte : POINTER TO BYTE;
+	pUdint : POINTER TO UDINT;
+	t: UDINT:=0;	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[RisingEdge( CLK:= bSend );
+CASE state OF
+0:	
+	IF fbClient.bConfigured AND ( (t=1) OR (RisingEdge.Q OR bContinuous)) THEN
+		IF t = 2 THEN
+			t:=0;
+		END_IF 
+		IF fbRequest.SendRequest(sUri:=sUri, fbClient:=fbClient, eRequestType:=eRequestType, 0, 0, 0) THEN				
+			state := 1;
+			reqCount:=reqCount+1;			
+		END_IF					
+	END_IF
+1:
+	IF NOT fbRequest.bBusy THEN
+			IF NOT fbRequest.bError THEN				 
+				jsonDoc := fbRequest.GetJsonDomContent(fbJson);
+				IF  jsonDoc <> 0 THEN
+					bJsonRes := TRUE;
+					fbJson.CopyDocument(sJson, SIZEOF(sJson)-1);
+				ELSE
+					bJsonRes := FALSE;
+				END_IF					
+				
+				(*
+					HttpClient always appends 0(not included in content length) and Http Responses normally don't include 0
+					so to test content with an appended 0 one has to patch content lenght of response
+				*)
+				IF t = 0 THEN
+					pByte :=  fbRequest.pContent+fbRequest.nContentSize-1;
+					IF pByte^ <> 0 THEN					
+						pByte :=  fbRequest.pContent+fbRequest.nContentSize;
+						IF pByte^ = 0 THEN
+							pByte :=  fbRequest.pContent+fbRequest.nContentSize-1;
+							pUdint := ADR(fbRequest.nContentSize); 
+							pUdint^:=fbRequest.nContentSize+1;
+							testCnt1:=testCnt1+1;
+						END_IF						
+					END_IF
+					t:=1;
+				ELSE
+					testCnt2:=testCnt2+1;
+					t:=2;
+				END_IF
+				
+				bGetContent1 := fbRequest.GetContent(pContent:=ADR(sContent1), nContentSize:=SIZEOF(sContent1), bSetNullTermination:=TRUE);
+				bGetContent2 := fbRequest.GetContent(pContent:=ADR(sContent2), nContentSize:=SIZEOF(sContent2), bSetNullTermination:=TRUE);
+				bGetContent3 := fbRequest.GetContent(pContent:=ADR(sContent3), nContentSize:=SIZEOF(sContent3), bSetNullTermination:=TRUE);
+				bGetContent4 := fbRequest.GetContent(pContent:=ADR(sContent4), nContentSize:=SIZEOF(sContent4), bSetNullTermination:=TRUE);
+				bGetContent5 := fbRequest.GetContent(pContent:=ADR(sContent5), nContentSize:=SIZEOF(sContent5), bSetNullTermination:=TRUE);
+				nContent1 := LEN2(ADR(sContent1));
+				nContent2 := LEN2(ADR(sContent2));
+				nContent3 := LEN2(ADR(sContent3));
+				nContent4 := LEN2(ADR(sContent4));
+				nFind1:= FIND2(ADR(sContent2), ADR(sContent3));
+				nFind2:= FIND2(ADR(sContent2), ADR(sContent1));
+				nFind3:= FIND2(ADR(sContent1), ADR(sContent2));
+				nFind4:= FIND2(ADR(sContent2), ADR(sContent4));
+				nFind5:= FIND2(ADR(sContent3), ADR(sContent5));
+				nLenT1:=LEN2(ADR(sT1));
+				nLen2T1:=LEN(sT1);
+				nSizeT1:=SIZEOF(sT1);												
+				
+				IF NOT (bGetContent1 = FALSE AND bGetContent2 = TRUE AND bGetContent3 = TRUE AND bGetContent4 = FALSE AND nFind1=1 AND nFind2=1 AND nFind3=0 AND nFind4=1 AND nFind5=1 AND nContent1 = 291 AND nContent2 = 292 AND nContent3 = 292 AND nContent4 = 5)  THEN
+					nErrCnt3:=nErrCnt3+1;
+				END_IF				
+				
+				bGetSrv1 := fbRequest.GetHeaderField('server', ADR(sServer1), SIZEOF(sServer1));
+				bGetSrv2 := fbRequest.GetHeaderField('server', ADR(sServer2), SIZEOF(sServer2));
+				bGetSrv3 := fbRequest.GetHeaderField('server', ADR(sServer3), SIZEOF(sServer3));
+				lenSrv1 := LEN2(ADR(sServer1));
+				lenSrv2 := LEN2(ADR(sServer2));
+				lenSrv3 := LEN2(ADR(sServer3));
+				findSrv1:= FIND2(ADR(sServer2), ADR(sServer3));
+				findSrv2:= FIND2(ADR(sServer2), ADR(sServer1));
+				findSrv3:= FIND2(ADR(sServer1), ADR(sServer2));
+				findSrv4:= FIND2(ADR(sServer), ADR(sServer2));
+				
+				IF NOT (bGetSrv1 = FALSE AND bGetSrv2 = TRUE AND lenSrv1 = 9 AND lenSrv2 = 10 AND lenSrv3 = 10 AND findSrv1 = 1 AND findSrv2 = 1 AND findSrv3 = 0 AND findSrv4=1 ) THEN
+					nErrCnt4:=nErrCnt4+1;
+				END_IF 
+
+				IF fbRequest.nStatusCode >= 200 AND fbRequest.nStatusCode < 300 THEN
+					IF bJsonRes THEN													 								
+						IF fbJson.HasMember(jsonDoc, 'id')  THEN							
+							jsonVal := fbJson.FindMember(jsonDoc, 'id');
+							IF fbJson.GetUint(jsonVal) = 1 THEN
+								valOkCount:=valOkCount+1;
+							ELSE
+								invResValCount:=invResValCount+1;
+							END_IF
+						ELSE 
+							invResCount:=invResCount+1;	
+						END_IF						
+					ELSE
+						invResCount:=invResCount+1;
+					END_IF					
+					nResCnt:=nResCnt+1;
+				ELSE
+					nErrCnt1:=nErrCnt1+1;					
+				END_IF
+					
+			ELSE
+				nErrCnt2:=nErrCnt2+1;
+			END_IF
+			state :=0;				
+	END_IF  	
+END_CASE
+fbClient.Execute();
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_TestHTTP_Get2">
+      <LineId Id="99" Count="2" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="676" Count="0" />
+      <LineId Id="678" Count="0" />
+      <LineId Id="677" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="129" Count="2" />
+      <LineId Id="150" Count="3" />
+      <LineId Id="494" Count="0" />
+      <LineId Id="155" Count="5" />
+      <LineId Id="625" Count="0" />
+      <LineId Id="667" Count="0" />
+      <LineId Id="742" Count="0" />
+      <LineId Id="741" Count="0" />
+      <LineId Id="740" Count="0" />
+      <LineId Id="669" Count="0" />
+      <LineId Id="658" Count="4" />
+      <LineId Id="666" Count="0" />
+      <LineId Id="663" Count="0" />
+      <LineId Id="735" Count="0" />
+      <LineId Id="664" Count="0" />
+      <LineId Id="652" Count="0" />
+      <LineId Id="672" Count="1" />
+      <LineId Id="739" Count="0" />
+      <LineId Id="674" Count="0" />
+      <LineId Id="670" Count="0" />
+      <LineId Id="646" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="574" Count="1" />
+      <LineId Id="950" Count="0" />
+      <LineId Id="1037" Count="0" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="631" Count="1" />
+      <LineId Id="952" Count="0" />
+      <LineId Id="636" Count="2" />
+      <LineId Id="953" Count="0" />
+      <LineId Id="1039" Count="0" />
+      <LineId Id="641" Count="0" />
+      <LineId Id="645" Count="0" />
+      <LineId Id="643" Count="0" />
+      <LineId Id="758" Count="0" />
+      <LineId Id="618" Count="0" />
+      <LineId Id="762" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="767" Count="2" />
+      <LineId Id="780" Count="0" />
+      <LineId Id="770" Count="1" />
+      <LineId Id="781" Count="3" />
+      <LineId Id="862" Count="0" />
+      <LineId Id="772" Count="1" />
+      <LineId Id="786" Count="0" />
+      <LineId Id="785" Count="0" />
+      <LineId Id="761" Count="0" />
+      <LineId Id="760" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="176" Count="6" />
+      <LineId Id="532" Count="1" />
+      <LineId Id="531" Count="0" />
+      <LineId Id="186" Count="2" />
+      <LineId Id="190" Count="3" />
+      <LineId Id="622" Count="0" />
+      <LineId Id="194" Count="7" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

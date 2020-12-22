@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="F_DeviceTwin_IsDesiredTopic" Id="{293d9a2c-19a0-4347-b1a4-8e00aa3d0f47}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_DeviceTwin_IsDesiredTopic : BOOL
+VAR_INPUT
+	sTopic : STRING; // $iothub/twin/PATCH/properties/desired/#	  
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF FIND(sTopic, '$$iothub/twin/PATCH/properties/desired/') = 0 THEN
+	  F_DeviceTwin_IsDesiredTopic := FALSE;
+ELSE
+	  F_DeviceTwin_IsDesiredTopic := TRUE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="F_DeviceTwin_IsDesiredTopic">
+      <LineId Id="7" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4021.12">
+  <POU Name="F_BuildJSON" Id="{272d0e97-05c8-43c5-9509-dd91bc2a6f4e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_BuildJSON : STRING(255)
+VAR_INPUT
+	  Sensor1 : STRING(255);
+	  Sensor2 : STRING(255);
+	  Sensor3 : STRING(255);
+END_VAR
+VAR
+	  sReturnValue : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[sReturnValue := CONCAT('{ "Sensor1" : ', Sensor1);
+sReturnValue := CONCAT(sReturnValue, ', "Sensor2" : ');
+sReturnValue := CONCAT(sReturnValue, Sensor2);
+sReturnValue := CONCAT(sReturnValue, ', "Sensor3" : ');
+sReturnValue := CONCAT(sReturnValue, Sensor3);
+sReturnValue := CONCAT(sReturnValue, '}');
+F_BuildJSON := sReturnValue;]]></ST>
+    </Implementation>
+    <LineIds Name="F_BuildJSON">
+      <LineId Id="7" Count="0" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="16" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,88 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{B1E792BE-AA5F-4E3C-8C82-674BF9C0715B}") = "CppIotMqttSample", "CppIotMqttSample.tsproj", "{82598772-C118-44D4-B551-B6FB0648D484}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|TwinCAT CE7 (ARMV7) = Debug|TwinCAT CE7 (ARMV7)
+		Debug|TwinCAT OS (ARMT2) = Debug|TwinCAT OS (ARMT2)
+		Debug|TwinCAT OS (x64) = Debug|TwinCAT OS (x64)
+		Debug|TwinCAT RT (x64) = Debug|TwinCAT RT (x64)
+		Debug|TwinCAT RT (x86) = Debug|TwinCAT RT (x86)
+		Debug|TwinCAT UM (x64) = Debug|TwinCAT UM (x64)
+		Debug|TwinCAT UM (x86) = Debug|TwinCAT UM (x86)
+		Release|TwinCAT CE7 (ARMV7) = Release|TwinCAT CE7 (ARMV7)
+		Release|TwinCAT OS (ARMT2) = Release|TwinCAT OS (ARMT2)
+		Release|TwinCAT OS (x64) = Release|TwinCAT OS (x64)
+		Release|TwinCAT RT (x64) = Release|TwinCAT RT (x64)
+		Release|TwinCAT RT (x86) = Release|TwinCAT RT (x86)
+		Release|TwinCAT UM (x64) = Release|TwinCAT UM (x64)
+		Release|TwinCAT UM (x86) = Release|TwinCAT UM (x86)
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT CE7 (ARMV7).ActiveCfg = Debug|TwinCAT CE7 (ARMV7)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT CE7 (ARMV7).Build.0 = Debug|TwinCAT CE7 (ARMV7)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT OS (ARMT2).ActiveCfg = Debug|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT OS (ARMT2).Build.0 = Debug|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT OS (x64).ActiveCfg = Debug|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT RT (x64).ActiveCfg = Debug|TwinCAT RT (x64)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT RT (x64).Build.0 = Debug|TwinCAT RT (x64)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT RT (x86).ActiveCfg = Debug|TwinCAT RT (x86)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT RT (x86).Build.0 = Debug|TwinCAT RT (x86)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT UM (x64).ActiveCfg = Debug|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Debug|TwinCAT UM (x86).ActiveCfg = Debug|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT CE7 (ARMV7).ActiveCfg = Release|TwinCAT CE7 (ARMV7)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT CE7 (ARMV7).Build.0 = Release|TwinCAT CE7 (ARMV7)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT OS (ARMT2).ActiveCfg = Release|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT OS (ARMT2).Build.0 = Release|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT OS (x64).ActiveCfg = Release|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT RT (x64).ActiveCfg = Release|TwinCAT RT (x64)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT RT (x64).Build.0 = Release|TwinCAT RT (x64)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT RT (x86).ActiveCfg = Release|TwinCAT RT (x86)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT RT (x86).Build.0 = Release|TwinCAT RT (x86)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT UM (x64).ActiveCfg = Release|TwinCAT OS (ARMT2)
+		{82598772-C118-44D4-B551-B6FB0648D484}.Release|TwinCAT UM (x86).ActiveCfg = Release|TwinCAT OS (ARMT2)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT CE7 (ARMV7).ActiveCfg = Debug|TwinCAT RT (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT OS (ARMT2).ActiveCfg = Debug|TwinCAT OS (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT OS (x64).ActiveCfg = Debug|TwinCAT OS (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT OS (x64).Build.0 = Debug|TwinCAT OS (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT RT (x64).ActiveCfg = Debug|TwinCAT RT (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT RT (x64).Build.0 = Debug|TwinCAT RT (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT RT (x86).ActiveCfg = Debug|TwinCAT RT (x86)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT RT (x86).Build.0 = Debug|TwinCAT RT (x86)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT UM (x64).ActiveCfg = Debug|TwinCAT UM (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT UM (x64).Build.0 = Debug|TwinCAT UM (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT UM (x86).ActiveCfg = Debug|TwinCAT UM (x86)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Debug|TwinCAT UM (x86).Build.0 = Debug|TwinCAT UM (x86)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT CE7 (ARMV7).ActiveCfg = Release|TwinCAT RT (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT OS (ARMT2).ActiveCfg = Release|TwinCAT OS (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT OS (x64).ActiveCfg = Release|TwinCAT OS (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT OS (x64).Build.0 = Release|TwinCAT OS (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT RT (x64).ActiveCfg = Release|TwinCAT RT (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT RT (x64).Build.0 = Release|TwinCAT RT (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT RT (x86).ActiveCfg = Release|TwinCAT RT (x86)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT RT (x86).Build.0 = Release|TwinCAT RT (x86)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT UM (x64).ActiveCfg = Release|TwinCAT UM (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT UM (x64).Build.0 = Release|TwinCAT UM (x64)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT UM (x86).ActiveCfg = Release|TwinCAT UM (x86)
+		{87D9DA33-659E-493E-80B4-3E7743A531AB}.Release|TwinCAT UM (x86).Build.0 = Release|TwinCAT UM (x86)
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://nt-teamfd02:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = CppIotMqttSample.tsproj
+		SccLocalPath1 = .
+		SccProjectUniqueName2 = CppIotMqttSample\\CppIotMqttSample.vcxproj
+		SccProjectTopLevelParentUniqueName2 = CppIotMqttSample.tsproj
+		SccProjectName2 = CppIotMqttSample
+		SccLocalPath2 = CppIotMqttSample
+	EndGlobalSection
+EndGlobal

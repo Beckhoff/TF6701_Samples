@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="F_DeviceTwin_GetSubscriberTopicStatusCodes" Id="{a932b92c-041d-4788-a4a7-741c8e5b30ac}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_DeviceTwin_GetSubscriberTopicStatusCodes : STRING
+VAR_INPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[F_DeviceTwin_GetSubscriberTopicStatusCodes := '$$iothub/twin/res/#';]]></ST>
+    </Implementation>
+    <LineIds Name="F_DeviceTwin_GetSubscriberTopicStatusCodes">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

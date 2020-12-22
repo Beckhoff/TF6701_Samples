@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <DUT Name="ST_IotButton" Id="{3125bf29-e483-4030-992d-221e6cd69f29}">
+    <Declaration><![CDATA[(* Possible payloads of Amazon IoT Button *)
+(* {"serialNumber":"G030PT028191AC4R","batteryVoltage":"1547mV","clickType":"SINGLE"} *)
+(* {"serialNumber":"G030PT028191AC4R","batteryVoltage":"1547mV","clickType":"DOUBLE"} *)
+TYPE ST_IotButton :
+STRUCT
+	serialNumber 	: STRING(255);	// Serial number as shown on back of device
+	batteryVoltage 	: STRING(255);	// [mv]
+	clickType		: STRING(255);	// SINGLE, DOUBLE
+	configuration	: STRING(255);	// Initial event after configuration  
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

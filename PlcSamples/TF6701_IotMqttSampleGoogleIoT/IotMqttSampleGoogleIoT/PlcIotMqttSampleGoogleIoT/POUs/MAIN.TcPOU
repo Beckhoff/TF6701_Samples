@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.16">
+  <POU Name="MAIN" Id="{f8d32ae9-13cf-4728-a76d-5f7c7fa15593}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	m : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[m := m + 1;
+PrgMqttCom();]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="7" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
