@@ -6,3 +6,4 @@ Should you have any questions regarding the provided sample code, please contact
 
 # Further information
 Further information about this sample code can be found on the [Beckhoff Information System](https://infosys.beckhoff.com) in the [TF6701 documentation](https://infosys.beckhoff.com/content/1033/tf6701_tc3_iot_communication_mqtt/index.html).
+
