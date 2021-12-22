@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <GVL Name="GVL" Id="{627c1d56-ed58-4d31-932c-833fc5a0dd18}">
+    <Declaration><![CDATA[VAR_GLOBAL
+END_VAR
+VAR_GLOBAL CONSTANT
+	cOverSamples 			: UDINT := 1; // Do not modify. 1 sample per cycle
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="F_GenerateData" Id="{7e0d66fa-b0f0-4666-b14c-fa381f027f98}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_GenerateData : STRING(255)
+VAR_INPUT
+END_VAR
+VAR
+	  fTemperature	: REAL;
+	  fHumidity		: REAL;
+	  fWindSpeed	: REAL;
+	  fbRandom		: DRAND;
+	  fbJson 		: FB_JsonSaxWriter;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* Create random data *)
+fbRandom(Seed := 1, Num => fTemperature);
+fbRandom(Seed := 2, Num => fHumidity);
+fbRandom(Seed := 3, Num => fWindSpeed);
+fTemperature := fTemperature * 100;
+fHumidity := fHumidity * 10;
+fWindSpeed := fWindSpeed + 20.42;
+
+(* Create JSON document and embed generated data *)
+fbJson.StartObject();
+fbJson.AddKey('DeviceId');
+fbJson.AddString(GVL.sDeviceId);
+fbJson.AddKey('Temperature');
+fbJson.AddReal(fTemperature);
+fbJson.AddKey('Humidity');
+fbJson.AddReal(fHumidity);
+fbJson.AddKey('WindSpeed');
+fbJson.AddReal(fWindSpeed);
+fbJson.EndObject();
+F_GenerateData := fbJson.GetDocument();]]></ST>
+    </Implementation>
+    <LineIds Name="F_GenerateData">
+      <LineId Id="33" Count="2" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="38" Count="1" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="11" Count="9" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

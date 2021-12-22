@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PrgMqttCom
+VAR
+	fbMqttClient : FB_IotMqttClient;
+	bSetParameter : BOOL := TRUE;
+	bConnect : BOOL := TRUE;
+	
+	(* topic subscribtion *)
+	bSubscribed : BOOL;
+	sTopicSub : STRING(255) := 'iotbutton/G030PT028191AC4R';
+
+	(* received message *)	
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv : STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv : STRING(255);
+	stIotButton : ST_IotButton;
+	
+	(* JSON *)
+	fbJson 			: FB_JsonDomParser;
+	jsonDoc 		: SJsonValue;
+	jsonProp		: SJsonValue;
+	jsonValue		: SJsonValue;
+	jsonIt			: SJsonIterator;
+	bHasMember		: BOOL;
+	sm				: STRING;
+	sj 				: SJsonValue;	
+	
+	fbMessageQueue : FB_IotMqttMessageQueue;
+	fbMessage : FB_IotMqttMessage;
+	
+	hrErrorOccurred : HRESULT; // contains the latest occurred error
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bSetParameter THEN
+	bSetParameter := FALSE;
+	
+	(* TLS settings for AWS IoT connection *)
+	fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\root.pem';
+    fbMqttClient.stTLS.sCert := 'c:\TwinCAT\3.1\Config\Certificates\e4090580c5-certificate.pem.crt';
+    fbMqttClient.stTLS.sKeyFile := 'c:\TwinCAT\3.1\Config\Certificates\e4090580c5-private.pem.key';
+	
+	(* Broker settings für AWS IoT *)
+	fbMqttClient.sHostName:= 'a158o5z7vk6zkt.iot.us-west-2.amazonaws.com';
+	fbMqttClient.nHostPort:= 8883;
+	fbMqttClient.sClientId:= 'SVENG-NB04'; 
+
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+END_IF
+
+fbMqttClient.Execute(bConnect);
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+
+		(* Retrieve JSON content *)
+		jsonDoc := fbJson.ParseDocument(sPayloadRcv);
+		bHasMember := fbJson.HasMember(jsonDoc, 'serialNumber');
+		IF (bHasMember) THEN
+			bHasMember := FALSE;
+	  		jsonProp := fbJson.FindMember(jsonDoc, 'serialNumber');
+			stIotButton.serialNumber := fbJson.GetString(jsonProp);
+	  	END_IF
+
+		bHasMember := fbJson.HasMember(jsonDoc, 'batteryVoltage');
+		IF (bHasMember) THEN
+			bHasMember := FALSE;
+	  		jsonProp := fbJson.FindMember(jsonDoc, 'batteryVoltage');
+			stIotButton.batteryVoltage := fbJson.GetString(jsonProp);
+	  	END_IF		
+
+		bHasMember := fbJson.HasMember(jsonDoc, 'clickType');
+		IF (bHasMember) THEN
+			bHasMember := FALSE;
+	  		jsonProp := fbJson.FindMember(jsonDoc, 'clickType');
+			stIotButton.clickType := fbJson.GetString(jsonProp);
+	  	END_IF			
+
+		bHasMember := fbJson.HasMember(jsonDoc, 'configuration');
+		IF (bHasMember) THEN
+			bHasMember := FALSE;
+	  		jsonProp := fbJson.FindMember(jsonDoc, 'configuration');
+			stIotButton.configuration := fbJson.GetString(jsonProp);
+	  	END_IF
+	END_IF
+END_IF
+
+IF fbMqttClient.bConnected THEN
+	IF NOT bSubscribed THEN
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="235" Count="2" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="304" Count="1" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="243" Count="4" />
+      <LineId Id="249" Count="4" />
+      <LineId Id="429" Count="2" />
+      <LineId Id="428" Count="0" />
+      <LineId Id="254" Count="3" />
+      <LineId Id="344" Count="1" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="364" Count="0" />
+      <LineId Id="368" Count="0" />
+      <LineId Id="380" Count="0" />
+      <LineId Id="371" Count="1" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="375" Count="2" />
+      <LineId Id="381" Count="0" />
+      <LineId Id="378" Count="1" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="382" Count="5" />
+      <LineId Id="373" Count="0" />
+      <LineId Id="388" Count="0" />
+      <LineId Id="390" Count="4" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="258" Count="5" />
+      <LineId Id="433" Count="2" />
+      <LineId Id="432" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

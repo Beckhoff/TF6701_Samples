@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="F_DeviceTwin_GetPublisherTopic" Id="{733722ae-9871-4e2e-887b-1f0a4ad18904}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_DeviceTwin_GetPublisherTopic : STRING
+VAR_INPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[F_DeviceTwin_GetPublisherTopic := '$$iothub/twin/PATCH/properties/reported/?$rid=42';]]></ST>
+    </Implementation>
+    <LineIds Name="F_DeviceTwin_GetPublisherTopic">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

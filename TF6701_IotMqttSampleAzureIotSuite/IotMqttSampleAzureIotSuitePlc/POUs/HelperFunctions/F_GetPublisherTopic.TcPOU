@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="F_GetPublisherTopic" Id="{4dfa2fd8-4a89-4e2a-8507-5e9b34a625b5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_GetPublisherTopic : STRING(255)
+VAR_INPUT
+	  sDeviceId			: STRING;
+END_VAR
+VAR
+	  sPublisherTopic 	: STRING;
+	  sTopicFirst 		: STRING := 'devices/';
+	  sTopicSecond		: STRING := '/messages/events/readpipe/';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[sPublisherTopic := CONCAT(sTopicFirst, sDeviceId);
+sPublisherTopic := CONCAT(sPublisherTopic, sTopicSecond);
+F_GetPublisherTopic := sPublisherTopic;]]></ST>
+    </Implementation>
+    <LineIds Name="F_GetPublisherTopic">
+      <LineId Id="7" Count="0" />
+      <LineId Id="12" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <GVL Name="GVL" Id="{29849984-e063-424a-95c8-240d58a7597a}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	  (* Replace this with your DeviceID and SAS Token *)
+	  sDeviceId			: STRING 		:= 'SVENG-NB04';
+	  sAzureSasToken	: STRING(511) 	:= 'HostName=beckhoffremotemonitoring2aa67.azure-devices.net;DeviceId=SVENG-NB04;SharedAccessSignature=SharedAccessSignature sr=beckhoffremotemonitoring2aa67.azure-devices.net%2fdevices%2fSVENG-NB04&sig=pqgq5v3RtIUQB7Anr%2fkes3Vjxurd%2fqYrIZyZODahNEM%3d&se=1527786437';
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

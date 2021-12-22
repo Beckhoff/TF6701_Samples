@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <DUT Name="ST_Values" Id="{ddce2c5e-11a3-4b4a-bc6c-fee7cd53eab6}">
+    <Declaration><![CDATA[TYPE ST_Values :
+STRUCT
+	  {attribute 'Unit' := 'm/s'}
+	  {attribute 'DisplayName' := 'Speed'}
+	  Sensor1   : REAL := 42.42;
+	  {attribute 'Unit' := 'V'}
+	  {attribute 'DisplayName' := 'Voltage'}
+	  Sensor2	: DINT := 230;
+	  {attribute 'Unit' := 'A'}
+	  {attribute 'DisplayName' := 'Current'}
+	  Sensor3	: DINT := 3;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

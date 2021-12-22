@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="F_DeviceTwin_GetReportedProperties" Id="{a53f3d7c-92da-4596-84cb-b86a0f97ef79}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_DeviceTwin_GetReportedProperties : STRING(2000)
+VAR_INPUT
+END_VAR
+VAR
+	(* JSON document *)
+	fbJsonDeviceInfo 	: FB_JsonSaxWriter;
+	sJsonDocDeviceInfo 	: STRING(2000);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbJsonDeviceInfo.StartObject();
+fbJsonDeviceInfo.AddKey('Device');
+fbJsonDeviceInfo.StartObject();
+fbJsonDeviceInfo.AddKey('Location');
+fbJsonDeviceInfo.StartObject();
+fbJsonDeviceInfo.AddKey('Latitude');
+fbJsonDeviceInfo.AddString('51.881034');
+fbJsonDeviceInfo.AddKey('Longitude');
+fbJsonDeviceInfo.AddString('8.491037');
+fbJsonDeviceInfo.EndObject();
+fbJsonDeviceInfo.EndObject();
+fbJsonDeviceInfo.AddKey('System');
+fbJsonDeviceInfo.StartObject();
+fbJsonDeviceInfo.AddKey('Manufacturer');
+fbJsonDeviceInfo.AddString('Beckhoff Automation');
+fbJsonDeviceInfo.AddKey('Firmware');
+fbJsonDeviceInfo.AddString('1.42');
+fbJsonDeviceInfo.AddKey('InstalledRAM');
+fbJsonDeviceInfo.AddString('4 GB');
+fbJsonDeviceInfo.AddKey('Processor');
+fbJsonDeviceInfo.AddString('Intel Core i5');
+fbJsonDeviceInfo.EndObject();
+fbJsonDeviceInfo.EndObject();
+sJsonDocDeviceInfo := fbJsonDeviceInfo.GetDocument();
+F_DeviceTwin_GetReportedProperties := sJsonDocDeviceInfo;]]></ST>
+    </Implementation>
+    <LineIds Name="F_DeviceTwin_GetReportedProperties">
+      <LineId Id="18" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="22" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

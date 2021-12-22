@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.0">
+  <POU Name="FB_MyMqtt" Id="{9c572ae6-e06d-4a20-9a98-0f29ff25b54f}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'c++_compatible'}
+FUNCTION_BLOCK FB_MyMqtt EXTENDS FB_IotMqttClient
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+
+VAR
+	(* received message *)
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv : STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv : STRING(255);
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="OnMqttMessage" Id="{00b896c3-f44c-4cf4-aba5-b8400ecc5e1a}">
+      <Declaration><![CDATA[{attribute 'c++_compatible'}
+{attribute 'pack_mode' := '4'}
+{attribute 'show'}
+{attribute 'minimal_input_size' := '4'}
+METHOD OnMqttMessage : HRESULT
+VAR_IN_OUT CONSTANT
+	topic	: STRING;
+END_VAR
+VAR_INPUT
+	payload	: PVOID;
+	length	: UDINT;
+	qos	: TcIotMqttQos;
+	repeated	: BOOL;
+END_VAR
+
+VAR
+	nPayloadRcvLen : UDINT;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.nMessagesRcv := SUPER^.nMessagesRcv + 1;
+
+STRNCPY( ADR(sTopicRcv), ADR(topic), SIZEOF(sTopicRcv) );
+nPayloadRcvLen := MIN(length, DINT_TO_UDINT(SIZEOF(sPayloadRcv))-1);
+MEMCPY( ADR(sPayloadRcv), payload, nPayloadRcvLen );
+sPayloadRcv[nPayloadRcvLen] := 0;  // ensure a null termination of received string
+
+OnMqttMessage := S_OK;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_MyMqtt">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_MyMqtt.OnMqttMessage">
+      <LineId Id="35" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="43" Count="1" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

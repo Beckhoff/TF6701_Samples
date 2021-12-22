@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PrgMqttCom
+VAR
+	fbMqttClient : FB_IotMqttClient;
+	bSetParameter : BOOL := TRUE;
+	bConnect : BOOL := TRUE;
+	
+	(* published message *)
+	sTopicPub : STRING(255) := 'iot-2/evt/event_sensorData/fmt/json';
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadPub : STRING(255);
+	i: UDINT;
+	fbTimer : TON := (PT:=T#500ms);
+	fRandomSensor1 : LREAL;
+	fRandomSensor2 : LREAL;
+	fRandomSensor3 : LREAL;
+	fbRandomNumber1 : DRAND;
+	fbRandomNumber2 : DRAND;
+	fbRandomNumber3 : DRAND;
+		
+	(* topic subscribtion *)
+	bSubscribed : BOOL;
+	sTopicSub : STRING(255) := 'iot-2/cmd/command_trigger/fmt/json';
+
+	(* received message *)	
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv : STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv : STRING(255);
+	
+	fbMessageQueue : FB_IotMqttMessageQueue;
+	fbMessage : FB_IotMqttMessage;
+		
+	hrErrorOccurred : HRESULT; // contains the latest occurred error
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bSetParameter THEN
+	bSetParameter := FALSE;
+	
+	(* Broker settings für IBM Watson IoT *)
+	fbMqttClient.sHostName := 'orgid.messaging.internetofthings.ibmcloud.com';
+	fbMqttClient.nHostPort := 1883;
+	fbMqttClient.sClientId := 'd:orgid:IPC:CX-12345'; 
+	fbMqttClient.sUserName := 'use-token-auth';
+	fbMqttClient.sUserPassword := '12342y?c12Gfq_8r12';
+	
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+END_IF
+
+fbMqttClient.Execute(bConnect);
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+	END_IF
+END_IF
+
+IF fbMqttClient.bConnected THEN
+	IF NOT bSubscribed THEN
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN // publish new payload every second
+		fbTimer(IN:=FALSE);
+		i := i + 1;
+		fbRandomNumber1(Seed:=1, Num=>fRandomSensor1);
+		fbRandomNumber2(Seed:=2, Num=>fRandomSensor2);
+		fbRandomNumber3(Seed:=3, Num=>fRandomSensor3);
+		
+		sPayloadPub := F_BuildJSON(	Sensor1 := LREAL_TO_STRING(fRandomSensor1*10), 
+									Sensor2 := LREAL_TO_STRING(fRandomSensor2*10), 
+									Sensor3 := LREAL_TO_STRING(fRandomSensor3*10)); 
+		
+		fbMqttClient.Publish(	sTopic:= sTopicPub, 
+								pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub)), 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="235" Count="2" />
+      <LineId Id="244" Count="3" />
+      <LineId Id="333" Count="1" />
+      <LineId Id="249" Count="4" />
+      <LineId Id="504" Count="2" />
+      <LineId Id="503" Count="0" />
+      <LineId Id="254" Count="9" />
+      <LineId Id="508" Count="2" />
+      <LineId Id="507" Count="0" />
+      <LineId Id="264" Count="4" />
+      <LineId Id="365" Count="0" />
+      <LineId Id="430" Count="1" />
+      <LineId Id="379" Count="0" />
+      <LineId Id="466" Count="1" />
+      <LineId Id="424" Count="1" />
+      <LineId Id="270" Count="2" />
+      <LineId Id="512" Count="2" />
+      <LineId Id="511" Count="0" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

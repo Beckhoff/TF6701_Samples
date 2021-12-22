@@ -1,0 +1,433 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="F_Mqtt_ThingSpeak_CreatePayloadStr" Id="{89f603de-a19c-41f7-ac00-e2f5f15a8ead}" SpecialFunc="None">
+    <Declaration><![CDATA[// | Input strings with empty allocation ('') are ignored.
+// | Function returns the size of the created payload in bytes.
+// | Function failed if 0 is returned. 
+FUNCTION F_Mqtt_ThingSpeak_CreatePayloadStr : UDINT
+VAR_INPUT
+	pPayload : POINTER TO STRING; // output buffer
+	nPayloadMaxSize : UDINT;
+
+	sValueField1 : STRING;
+	sValueField2 : STRING;
+	sValueField3 : STRING;
+	sValueField4 : STRING;
+	sValueField5 : STRING;
+	sValueField6 : STRING;
+	sValueField7 : STRING;
+	sValueField8 : STRING;
+	sLatitude : STRING(31); // decimal format
+	sLongitude : STRING(31); // decimal format
+	sElevation : STRING(31); // in meters
+END_VAR
+VAR_IN_OUT CONSTANT
+	sStatus : STRING;
+	sTwitter : STRING;
+	sTweet : STRING;
+	sCreatedAt : STRING;
+	sTimezone : STRING;
+END_VAR
+
+VAR
+	nInputSize : UDINT;
+	nTagSize : UDINT;
+	nNextFreeIdx : UDINT;
+	pByte : POINTER TO BYTE;
+END_VAR
+VAR
+	cField1 : STRING(15) := 'field1=';
+	cField2 : STRING(15) := 'field2=';
+	cField3 : STRING(15) := 'field3=';
+	cField4 : STRING(15) := 'field4=';
+	cField5 : STRING(15) := 'field5=';
+	cField6 : STRING(15) := 'field6=';
+	cField7 : STRING(15) := 'field7=';
+	cField8 : STRING(15) := 'field8=';
+	cLatitude : STRING(15) := 'lat=';
+	cLongitude : STRING(15) := 'long=';
+	cElevation : STRING(15) := 'elevation=';
+	cStatus : STRING(15) := 'status=';
+	cTwitter : STRING(15) := 'twitter=';
+	cTweet : STRING(15) := 'tweet=';
+	cCreatedAt : STRING(15) := 'created_at=';
+	cTimezone : STRING(15) := 'timezone=';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MEMSET(pPayload, 0, nPayloadMaxSize);
+pByte := pPayload;
+
+nInputSize := LEN2(ADR(sValueField1));
+IF nInputSize > 0 THEN
+	nTagSize := LEN2(ADR(cField1));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cField1), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sValueField1), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sValueField2));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cField2));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cField2), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sValueField2), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sValueField3));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cField3));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cField3), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sValueField3), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sValueField4));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cField4));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cField4), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sValueField4), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sValueField5));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cField5));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cField5), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sValueField5), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sValueField6));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cField6));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cField6), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sValueField6), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sValueField7));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cField7));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cField7), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sValueField7), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sValueField8));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cField8));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cField8), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sValueField8), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sLatitude));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cLatitude));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cLatitude), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sLatitude), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sLongitude));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cLongitude));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cLongitude), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sLongitude), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sElevation));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cElevation));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cElevation), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sElevation), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sStatus));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cStatus));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cStatus), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sStatus), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sTwitter));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cTwitter));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cTwitter), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sTwitter), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sTweet));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cTweet));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cTweet), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sTweet), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sCreatedAt));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cCreatedAt));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cCreatedAt), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sCreatedAt), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+nInputSize := LEN2(ADR(sTimezone));
+IF nInputSize > 0 THEN
+	IF nNextFreeIdx > 0 THEN // '&' required
+		IF nNextFreeIdx + 1 + 1 > nPayloadMaxSize THEN
+			RETURN;
+		END_IF
+		pByte[nNextFreeIdx] := 16#26; // '&'
+		nNextFreeIdx := nNextFreeIdx+1;
+	END_IF	
+
+	nTagSize := LEN2(ADR(cTimezone));
+	IF nNextFreeIdx + nTagSize + nInputSize + 1 > nPayloadMaxSize THEN
+		RETURN;
+	END_IF
+	MEMCPY(pPayload+nNextFreeIdx, ADR(cTimezone), nTagSize);
+	nNextFreeIdx := nNextFreeIdx+nTagSize;
+	MEMCPY(pPayload+nNextFreeIdx, ADR(sTimezone), nInputSize);
+	nNextFreeIdx := nNextFreeIdx+nInputSize;
+END_IF
+
+F_Mqtt_ThingSpeak_CreatePayloadStr := nNextFreeIdx;
+]]></ST>
+    </Implementation>
+    <LineIds Name="F_Mqtt_ThingSpeak_CreatePayloadStr">
+      <LineId Id="120" Count="0" />
+      <LineId Id="62" Count="1" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="55" Count="2" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="64" Count="1" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="84" Count="8" />
+      <LineId Id="71" Count="1" />
+      <LineId Id="101" Count="17" />
+      <LineId Id="73" Count="1" />
+      <LineId Id="123" Count="17" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="141" Count="17" />
+      <LineId Id="77" Count="1" />
+      <LineId Id="159" Count="17" />
+      <LineId Id="79" Count="1" />
+      <LineId Id="177" Count="17" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="198" Count="17" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="216" Count="18" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="241" Count="17" />
+      <LineId Id="236" Count="1" />
+      <LineId Id="261" Count="17" />
+      <LineId Id="238" Count="1" />
+      <LineId Id="282" Count="17" />
+      <LineId Id="279" Count="1" />
+      <LineId Id="301" Count="17" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="322" Count="18" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="341" Count="0" />
+      <LineId Id="347" Count="17" />
+      <LineId Id="342" Count="1" />
+      <LineId Id="366" Count="17" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="59" Count="1" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

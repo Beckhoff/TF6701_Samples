@@ -1,0 +1,185 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="FB_TopicInfos" Id="{f1324691-8091-493d-b3d1-63d12d30aa2a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_TopicInfos
+VAR_INPUT
+	sTopic : STRING(255);
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	bIsMethodCallTopic : BOOL;
+	bIsSystemTopic : BOOL;
+	bIsTwinTopic : BOOL;
+	
+	sMethodID : STRING(255);
+	sMethodName : STRING(255);
+	nRequestID : UINT;
+	nStatusCode : UINT;
+	
+	nTopicLength : UDINT;
+	nSubTopicLength : UDINT;
+	nMethodsPos : INT;
+	nPos : INT;
+	
+	sTopicParser_1 : STRING;
+	sTopicParser_2 : STRING;
+	sTopicParser_3 : STRING;
+	sTopicParser_4 : STRING;
+	sTopicParser_5 : STRING;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[bIsSystemTopic := FALSE;
+bIsMethodCallTopic := FALSE;
+bIsTwinTopic := FALSE;
+
+sTopicParser_1 := LEFT(sTopic, 7);
+nTopicLength := LEN2(ADR(sTopic));
+IF sTopicParser_1 = '$$iothub' THEN // Device Twin system topic ?
+	(* Check if the topic is a MethodCall topic *)
+	bIsSystemTopic := TRUE;
+	nMethodsPos := FIND(sTopic, 'methods');	
+	IF nMethodsPos <> 0 THEN
+		bIsMethodCallTopic := TRUE;
+		(* format of method topic : $iothub/methods/POST/{method name}/?$rid={request id} *)
+		sTopicParser_2 := MID(sTopic, 21, 1); // $$iothub/methods/POST/
+		sTopicParser_3 := RIGHT(sTopic, UDINT_TO_INT(nTopicLength - 21)); // {method name}/?$rid={request id}
+		nSubTopicLength := LEN2(ADR(sTopicParser_3));
+		nPos := FIND(sTopicParser_3, '/');
+		sTopicParser_4 := LEFT(sTopicParser_3, nPos - 1); 
+		sMethodName := sTopicParser_4;
+		nPos := FIND(sTopicParser_3, '=');
+		sTopicParser_5 := RIGHT(sTopicParser_3, UDINT_TO_INT(nSubTopicLength - nPos)); 
+		sMethodID := sTopicParser_5;
+	ELSE
+		bIsTwinTopic := TRUE;
+		sTopicParser_2 := LEFT(sTopic, 20);
+		sTopicParser_3 := RIGHT(sTopicParser_2, 3); // Response status code
+		nStatusCode := STRING_TO_UINT(sTopicParser_3);
+		sTopicParser_4 := RIGHT(sTopic, UDINT_TO_INT(nTopicLength - 21)); // get last sub-topic
+		sTopicParser_5 := MID(sTopicParser_4, UDINT_TO_INT(LEN2(ADR(sTopicParser_4))) - FIND(sTopicParser_4, '='), 7); // retrieve RequestId from response
+		nRequestID := STRING_TO_UINT(sTopicParser_5);
+	END_IF	
+ELSE
+	bIsSystemTopic := FALSE;
+END_IF]]></ST>
+    </Implementation>
+    <Method Name="IsMethodCallTopic" Id="{99a16476-198e-495e-93b1-9241dd1ae8c6}">
+      <Declaration><![CDATA[METHOD IsMethodCallTopic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IsMethodCallTopic := bIsMethodCallTopic;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IsSystemTopic" Id="{00ec5f30-cf55-4df6-8324-e945341c23ee}">
+      <Declaration><![CDATA[METHOD IsSystemTopic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IsSystemTopic := bIsSystemTopic;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IsTwinTopic" Id="{f12a412d-e967-417e-a29e-236710cc1744}">
+      <Declaration><![CDATA[METHOD IsTwinTopic : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IsTwinTopic := bIsTwinTopic;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="MethodID" Id="{a57ffbd4-ad50-4113-b0a8-b2eec7d673e6}">
+      <Declaration><![CDATA[PROPERTY MethodID : STRING(255)]]></Declaration>
+      <Get Name="Get" Id="{6f4f7c40-5d0f-4cfc-ae31-799a3d75c275}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[MethodID := sMethodID;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="MethodName" Id="{0454d935-12c4-4f44-8ee4-bbb033c5cbbe}">
+      <Declaration><![CDATA[PROPERTY MethodName : STRING(255)]]></Declaration>
+      <Get Name="Get" Id="{7295062b-873e-4a88-b826-f03276d994f9}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[MethodName := sMethodName;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="RequestID" Id="{c944b41a-a756-4473-b345-c357aa7e3cec}">
+      <Declaration><![CDATA[PROPERTY RequestID : UINT]]></Declaration>
+      <Get Name="Get" Id="{2f5eb87f-9d1d-4bd8-9178-83d418a0149d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[RequestID := nRequestID;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="StatusCode" Id="{c8c3ebd3-dd87-467e-9c37-ff8b1b77eaee}">
+      <Declaration><![CDATA[PROPERTY StatusCode : UINT]]></Declaration>
+      <Get Name="Get" Id="{1607873b-5c1c-4e93-a14d-8d75110df0e1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[StatusCode := nStatusCode;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="FB_TopicInfos">
+      <LineId Id="87" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="23" Count="3" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="34" Count="5" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="43" Count="1" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TopicInfos.IsMethodCallTopic">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TopicInfos.IsSystemTopic">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TopicInfos.IsTwinTopic">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TopicInfos.MethodID.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TopicInfos.MethodName.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TopicInfos.RequestID.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_TopicInfos.StatusCode.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

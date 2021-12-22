@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+  <POU Name="F_DeviceTwin_GetSubscriberTopicDesired" Id="{864463c2-3abb-4edf-9f72-90da71418645}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_DeviceTwin_GetSubscriberTopicDesired : STRING
+VAR_INPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[F_DeviceTwin_GetSubscriberTopicDesired := '$$iothub/twin/PATCH/properties/desired/#';]]></ST>
+    </Implementation>
+    <LineIds Name="F_DeviceTwin_GetSubscriberTopicDesired">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
