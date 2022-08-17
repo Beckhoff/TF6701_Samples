@@ -51,9 +51,9 @@
       <DefaultResolution>Tc3_IotBase, * (Beckhoff Automation GmbH)</DefaultResolution>
       <Namespace>Tc3_IotBase</Namespace>
       <Parameters>
-        <Parameter xmlns="">
+        <Parameter ListName="PARAMETERLIST">
           <Key>CSIZEOFMQTTCLIENTUSERPWD</Key>
-          <Value>1024</Value>
+          <Value>2048</Value>
         </Parameter>
       </Parameters>
     </PlaceholderReference>

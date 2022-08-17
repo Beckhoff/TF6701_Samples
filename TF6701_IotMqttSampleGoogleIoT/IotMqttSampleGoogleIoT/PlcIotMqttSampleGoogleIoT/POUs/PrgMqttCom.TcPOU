@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.10">
   <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PrgMqttCom
 VAR
@@ -11,31 +11,41 @@ VAR
 	bConnect 			: BOOL := TRUE;
 	hrErrorOccurred 	: HRESULT;
 	
+	(* Application specific data for Google Iot Core connection *)
+	sProjectID				: T_MaxString := 'my-projectId';	 // Iot Core defined project ID
+	sRegion					: T_MaxString := 'europe-west1'; // us-central1, europe-west1, and asia-east1
+	sRegistryID				: T_MaxString := 'my-registry';	 // Iot Core defined registry ID
+	sDeviceID				: T_MaxString := 'my-device';	 // Iot Core defined device ID
+	sFullDevicePath 		: STRING := 'projects/%s/locations/%s/registries/%s/devices/%s'; // Full device path template - Do not change !!
+	sKeyFilePath			: STRING := 'C:\TwinCAT\3.1\Config\Certificates\googleIotSample\rsa_private.pem'; // device private key
+	sCaFilePath				: STRING := 'c:\TwinCAT\3.1\Config\Certificates\googleIotSample\roots.pem'; // Google RootCA chain
+	sTopicPubTemplate		: STRING := '/devices/%s/events'; // Publisher topic template - Do not change !!
+	sTopicSubTemplate		: STRING := '/devices/%s/commands/#'; // Subscriber topic template - Do not change !!
+	
 	(* JWT *)
-	//fbJwt				: FB_JwtHelper;
 	fbJwt				: FB_JwtEncode;
 	nState				: UINT;
 	hResult				: HRESULT;
-	sJwt				: STRING(512);
-	sJwtPayload			: STRING(512); // '{"aud": "twincat-iot","iat": 1560240662,"exp": 1560327062}'
-	fbJwtPayload		: FB_JsonSaxWriter;	
-	sPrivateKeyBuffer	: STRING(2048);
+	sJwt				: STRING(2048); // This buffer must be big enough to hold the Jwt token contents
+	sJwtPayload			: STRING(1024); // Example content: '{"aud": "my-ProjectId","iat": 1560240662,"exp": 1560327062}'
+	fbJwtPayload		: FB_JsonSaxWriter;	// Used to generate the JWT
+	sPrivateKeyBuffer	: STRING(2048); // This buffer must be big enough to hold the private key contents
 	dtIAT 				: DT;
 	dtEXP 				: DT;
 	ftTemp 				: T_FileTime;
 	fbGetTime 			: GETSYSTEMTIME;
 	
 	(* Publish *)
-	sTopicPub 			: STRING(255) := '/devices/sveng-nb05/events';
+	sTopicPub 			: STRING(255);
   	fbJson      		: FB_JsonSaxWriter;
   	sJsonDoc    		: STRING(255);
 	fbTimer 			: TON := (PT:=T#1S);
 	i					: UDINT;
 	j 					: REAL;
 	
-	(* Subscribtion *)
+	(* Subscription *)
 	bSubscribed 		: BOOL;
-	sTopicSub 			: STRING(255) := '/devices/sveng-nb05/commands/#';
+	sTopicSub 			: STRING(255);
 
 	(* received message *)	
 	{attribute 'TcEncoding':='UTF-8'}
@@ -48,35 +58,32 @@ VAR
 	fbSystemTime    	: GETSYSTEMTIME;
 	timeAsFileTime  	: T_FILETIME;
 	timeAsDT        	: DT;
+		
+	(* Helper *)	
+	fbFormatClientID 		: FB_FormatString; // Format the client id to the full device path
+	fbFormatPublishTopic	: FB_FormatString;
+	fbFormatSubscrTopic		: FB_FormatString;
 
 END_VAR
 
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[(* Create Json Web Token (JWT) *)
-CASE nState OF
+      <ST><![CDATA[CASE nState OF
 	0 :
-		(* Prepare JWT payload *)
-		fbGetTime(timeLoDW => ftTemp.dwLowDateTime, timeHiDW => ftTemp.dwHighDateTime);
-		dtIAT := FILETIME_TO_DT(ftTemp);
-		dtEXP := dtIAT + T#24H;
-		fbJwtPayload.StartObject();
-		fbJwtPayload.AddKeyString('aud', 'twincat-iot');
-		fbJwtPayload.AddKeyNumber('iat', DT_TO_DINT(dtIAT));
-		fbJwtPayload.AddKeyNumber('exp', DT_TO_DINT(dtEXP));
-		fbJwtPayload.EndObject();
-		sJwtPayload := fbJwtPayload.GetDocument();
-		fbJwtPayload.ResetDocument();
+		(* Generate JWT payload *)
+		sJwtPayload := GenerateJwtPayload();
 		nState := 1;
 
 	1 : 
 		(* Generate JWT *)
+		(* Please note that the JWT has to be refreshed periodically, which is not shown in this sample. *)
+		(* https://medium.com/google-cloud/refreshing-json-web-tokens-jwts-for-google-cloud-iot-core-897318df3836 *)
 		fbJwt(	bExecute:=TRUE, 
 				sHeaderAlg:='RS256', 
 				sPayload:=sJwtPayload,
 				pKey:=ADR(sPrivateKeyBuffer),
 				nKeySize:=SIZEOF(sPrivateKeyBuffer),
-				sKeyFilePath:='c:\TwinCAT\3.1\Config\Certificates\Google\rsa_private.pem', 
+				sKeyFilePath:= sKeyFilePath, 
 				sJwt:=sJwt, 
 				nJwtSize:=SIZEOF(sJwt),
 				hrErrorCode=>hResult);
@@ -91,15 +98,37 @@ CASE nState OF
 	2 : 
 		bSetParameter := FALSE;
 		
-		(* Broker settings für Google IoT Core *)
+		// Create the full device path for the MQTT client ID
+		// Example path: 'projects/my-projectId/locations/europe-west1/registries/'my-registry/devices/my-device'
+		fbFormatClientID(
+			sFormat			:= sFullDevicePath, 
+			arg1			:= f_string(sProjectID), 
+			arg2			:= f_string(sRegion), 
+			arg3			:= f_string(sRegistryID), 
+			arg4			:= f_string(sDeviceID), 
+			sOut			=> fbMqttClient.sClientId
+			);
+			
+		fbFormatPublishTopic(
+			sFormat			:= sTopicPubTemplate,
+			arg1			:= f_string(sDeviceID),
+			sOut			=> sTopicPub
+			);
+			
+		fbFormatSubscrTopic(
+			sFormat			:= sTopicSubTemplate,
+			arg1			:= f_string(sDeviceID),
+			sOut			=> sTopicSub
+			);
+		
+		(* Broker settings for Google IoT Core *)
 		fbMqttClient.sHostName:= 'mqtt.googleapis.com';
 		fbMqttClient.nHostPort:= 8883;
-		fbMqttClient.sClientId:= 'projects/twincat-iot/locations/europe-west1/registries/twincat-iot-registry/devices/sveng-nb05'; 
 		fbMqttClient.sUserName:= 'unused';
-		fbMqttClient.sUserPassword:= sJwt;
+		fbMqttClient.sUserPassword:= sJwt; // !! Important : sUserPassword max size can be adapted via Tc3_IotBase ParameterList (cSizeOfMqttClientUserPwd)
 	
 		(* TLS settings for Google IoT Core connection *)
-		fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\Google\roots.pem';
+		fbMqttClient.stTLS.sCA := sCaFilePath;
 		fbMqttClient.ipMessageQueue := fbMessageQueue;
 		
 		nState := 3;
@@ -162,17 +191,34 @@ END_CASE
 
 ]]></ST>
     </Implementation>
+    <Method Name="GenerateJwtPayload" Id="{d5a537eb-0efb-4411-9455-d1629d8559b5}">
+      <Declaration><![CDATA[METHOD GenerateJwtPayload : STRING(1024)
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Google IoT documentation for more info: https://cloud.google.com/iot/docs/how-tos/credentials/jwts
+// Testing of the token can be done here: https://jwt.io/
+fbGetTime(timeLoDW => ftTemp.dwLowDateTime, timeHiDW => ftTemp.dwHighDateTime);
+dtIAT := FILETIME_TO_DT(ftTemp);
+dtEXP := dtIAT + T#24H; // max. is 24 hours
+fbJwtPayload.StartObject();
+fbJwtPayload.AddKeyString('aud', sProjectID);
+fbJwtPayload.AddKeyNumber('iat', DT_TO_DINT(dtIAT));
+fbJwtPayload.AddKeyNumber('exp', DT_TO_DINT(dtEXP));
+fbJwtPayload.EndObject();
+GenerateJwtPayload := fbJwtPayload.GetDocument();
+fbJwtPayload.ResetDocument();]]></ST>
+      </Implementation>
+    </Method>
     <LineIds Name="PrgMqttCom">
-      <LineId Id="578" Count="0" />
       <LineId Id="742" Count="0" />
       <LineId Id="744" Count="0" />
-      <LineId Id="772" Count="7" />
-      <LineId Id="782" Count="1" />
-      <LineId Id="771" Count="0" />
+      <LineId Id="772" Count="0" />
+      <LineId Id="1007" Count="0" />
       <LineId Id="785" Count="0" />
       <LineId Id="770" Count="0" />
       <LineId Id="784" Count="0" />
       <LineId Id="786" Count="0" />
+      <LineId Id="1089" Count="1" />
       <LineId Id="746" Count="0" />
       <LineId Id="757" Count="1" />
       <LineId Id="914" Count="0" />
@@ -187,8 +233,17 @@ END_CASE
       <LineId Id="747" Count="0" />
       <LineId Id="753" Count="0" />
       <LineId Id="796" Count="0" />
+      <LineId Id="982" Count="0" />
+      <LineId Id="993" Count="0" />
+      <LineId Id="985" Count="6" />
+      <LineId Id="980" Count="0" />
+      <LineId Id="1010" Count="5" />
+      <LineId Id="1018" Count="0" />
+      <LineId Id="1020" Count="3" />
+      <LineId Id="1019" Count="0" />
+      <LineId Id="981" Count="0" />
       <LineId Id="807" Count="0" />
-      <LineId Id="797" Count="2" />
+      <LineId Id="797" Count="1" />
       <LineId Id="801" Count="4" />
       <LineId Id="795" Count="0" />
       <LineId Id="791" Count="0" />
@@ -199,6 +254,13 @@ END_CASE
       <LineId Id="809" Count="0" />
       <LineId Id="745" Count="0" />
       <LineId Id="486" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="PrgMqttCom.GenerateJwtPayload">
+      <LineId Id="34" Count="1" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="19" Count="5" />
       <LineId Id="5" Count="0" />
     </LineIds>
   </POU>
