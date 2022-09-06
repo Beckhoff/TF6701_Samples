@@ -34,7 +34,7 @@ END_VAR
 	bSetParameter := FALSE;
 	fbMqttClient.sHostName:= '%HOSTNAME%';
 	fbMqttClient.nHostPort:= 8883;
-	fbMqttClient.sClientId:= '%CLIENTID'; 
+	fbMqttClient.sClientId:= '%CLIENTID%';
 	fbMqttClient.sTopicPrefix:= '';  
 	fbMqttClient.stTLS.sCA := '%CACERT%';
     fbMqttClient.stTLS.sCert := '%CLIENTCERT%';
