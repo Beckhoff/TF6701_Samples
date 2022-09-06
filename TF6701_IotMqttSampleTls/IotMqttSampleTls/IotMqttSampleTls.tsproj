@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.32">
+	<Project ProjectGUID="{3E268D1F-B60F-4063-8321-AE2108FB54E9}" Target64Bit="true" ShowHideConfigurations="#x106">
+		<System>
+			<Tasks>
+				<Task Id="3" Priority="20" CycleTime="100000" AmsPort="350" AdtTasks="true">
+					<Name>PlcTask</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}" Name="PlcIotMqttSampleTls" PrjFilePath="PlcIotMqttSampleTls\PlcIotMqttSampleTls.plcproj" TmcFilePath="PlcIotMqttSampleTls\PlcIotMqttSampleTls.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x0002" SymbolicMapping="true">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="PlcIotMqttSampleTls\PlcIotMqttSampleTls.tmc" TmcHash="{2F954A49-0EAE-39E7-1AAE-2216D07C1ED1}">
+					<Name>PlcIotMqttSampleTls Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<Contexts>
+						<Context>
+							<Id NeedCalleeCall="true" OTCID="#x00000001">0</Id>
+							<Name>PlcTask</Name>
+							<ManualConfig>
+								<OTCID>#x08500010</OTCID>
+							</ManualConfig>
+							<Priority>50</Priority>
+						</Context>
+					</Contexts>
+					<TaskPouOids>
+						<TaskPouOid Prio="50" OTCID="#x08502001"/>
+					</TaskPouOids>
+				</Instance>
+			</Project>
+		</Plc>
+	</Project>
+</TcSmProject>

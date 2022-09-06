@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[(* This sample demonstrates how to set up TLS parameters for an MQTT connection *)
+(* Please insert values for the placeholders marked with % *)
+PROGRAM PrgMqttCom
+VAR
+	fbMqttClient : FB_IotMqttClient;
+	bSetParameter : BOOL := TRUE;
+	bConnect : BOOL := TRUE;
+	
+	(* published message *)
+	sTopicPub : STRING(255) := 'devices/%CLIENTID%';
+	sPayloadPub : STRING(255);
+	i: UDINT;
+	fbTimer : TON := (PT:=T#1S);
+	
+	(* received message *)
+	bSubscribed : BOOL;
+	sTopicSub : STRING(255) := 'devices/%CLIENTID%';
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv : STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv : STRING(255);
+	fbMessageQueue : FB_IotMqttMessageQueue;
+	fbMessage : FB_IotMqttMessage;
+	
+	hrErrorOccurred : HRESULT; // contains the latest occurred error
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bSetParameter THEN
+	bSetParameter := FALSE;
+	fbMqttClient.sHostName:= '%HOSTNAME%';
+	fbMqttClient.nHostPort:= 8883;
+	fbMqttClient.sClientId:= '%CLIENTID'; 
+	fbMqttClient.sTopicPrefix:= '';  
+	fbMqttClient.stTLS.sCA := '%CACERT%';
+    fbMqttClient.stTLS.sCert := '%CLIENTCERT%';
+    fbMqttClient.stTLS.sKeyFile := '%CLIENTKEY%';
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+END_IF
+
+fbMqttClient.Execute(bConnect);
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+	END_IF
+END_IF
+
+IF fbMqttClient.bConnected THEN
+	IF NOT bSubscribed THEN
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN // publish new payload every second
+		fbTimer(IN:=FALSE);
+		i := i + 1;
+		sPayloadPub := CONCAT('MyMessage', TO_STRING(i));
+		fbMqttClient.Publish(	sTopic:= sTopicPub, 
+								pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub))+1, 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="6" Count="5" />
+      <LineId Id="126" Count="1" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="17" Count="3" />
+      <LineId Id="89" Count="2" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="21" Count="9" />
+      <LineId Id="94" Count="2" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="33" Count="4" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="98" Count="2" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
