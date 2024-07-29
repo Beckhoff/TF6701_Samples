@@ -1,0 +1,6 @@
+user Admin
+topic #
+user MyUser1
+topic users/MyUser1/#
+user MyUser2
+topic users/MyUser2/#

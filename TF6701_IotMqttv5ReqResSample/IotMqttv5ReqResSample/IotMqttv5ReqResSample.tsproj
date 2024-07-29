@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4024.32" TcVersionFixed="true">
+	<Project ProjectGUID="{91689F42-2F67-4C93-8909-52D5E03CD288}" Target64Bit="true" ShowHideConfigurations="#x106">
+		<System>
+			<Tasks>
+				<Task Id="3" Priority="20" CycleTime="100000" AmsPort="350" AdtTasks="true">
+					<Name>PlcTask</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{86DC50EA-E9CE-4953-A41C-D6ADEAB509EB}" Name="PlcIotMqttv5ReqSample" PrjFilePath="PlcIotMqttv5ReqSample\PlcIotMqttv5ReqSample.plcproj" TmcFilePath="PlcIotMqttv5ReqSample\PlcIotMqttv5ReqSample.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x0002" SymbolicMapping="true">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="PlcIotMqttv5ReqSample\PlcIotMqttv5ReqSample.tmc" TmcHash="{FB337DE5-E5A5-D95B-DE32-2AFFEEDDE9C4}">
+					<Name>PlcIotMqttv5ReqSample Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<Contexts>
+						<Context>
+							<Id NeedCalleeCall="true">0</Id>
+							<Name>PlcTask</Name>
+							<ManualConfig>
+								<OTCID>#x02010030</OTCID>
+							</ManualConfig>
+							<Priority>20</Priority>
+							<CycleTime>10000000</CycleTime>
+						</Context>
+					</Contexts>
+					<TaskPouOids>
+						<TaskPouOid Prio="20" OTCID="#x08502001"/>
+					</TaskPouOids>
+				</Instance>
+			</Project>
+			<Project GUID="{C23F24FB-5418-4FD1-B61F-6BD5F3DA17CC}" Name="PlcIotMqttv5ResSample" PrjFilePath="PlcIotMqttv5ResSample\PlcIotMqttv5ResSample.plcproj" TmcFilePath="PlcIotMqttv5ResSample\PlcIotMqttv5ResSample.tmc" ReloadTmc="true" AmsPort="852" FileArchiveSettings="#x0002" SymbolicMapping="true">
+				<Instance Id="#x08502040" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="PlcIotMqttv5ResSample\PlcIotMqttv5ResSample.tmc" TmcHash="{47C964B1-8EA7-D93F-7CE5-F670D022E7EE}">
+					<Name>PlcIotMqttv5ResSample Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<Contexts>
+						<Context>
+							<Id NeedCalleeCall="true">0</Id>
+							<Name>PlcTask</Name>
+							<ManualConfig>
+								<OTCID>#x02010030</OTCID>
+							</ManualConfig>
+							<Priority>20</Priority>
+							<CycleTime>10000000</CycleTime>
+						</Context>
+					</Contexts>
+					<TaskPouOids>
+						<TaskPouOid Prio="20" OTCID="#x08502041"/>
+					</TaskPouOids>
+				</Instance>
+			</Project>
+		</Plc>
+	</Project>
+</TcSmProject>

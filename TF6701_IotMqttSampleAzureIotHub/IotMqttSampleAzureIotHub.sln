@@ -1,15 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# TcXaeShell Solution File, Format Version 11.00
+VisualStudioVersion = 15.0.33403.129
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{B1E792BE-AA5F-4E3C-8C82-674BF9C0715B}") = "IotMqttSampleAzureIotHub", "IotMqttSampleAzureIotHub\IotMqttSampleAzureIotHub.tsproj", "{AA6B9F2B-7C4B-4B8E-898E-9F3284B309C7}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{31C138B0-554D-4767-BAB4-C48732698BC4}"
-	ProjectSection(SolutionItems) = preProject
-		IotMqttSampleAzureIotHub\BaltimoreCyberTrust.crt = IotMqttSampleAzureIotHub\BaltimoreCyberTrust.crt
-		IotMqttSampleAzureIotHub\IotMqttSampleAzureIotHub.tszip = IotMqttSampleAzureIotHub\IotMqttSampleAzureIotHub.tszip
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,17 +49,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://nt-teamfd02.beckhoff.com:8080/tfs/defaultcollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = IotMqttSampleAzureIotHub\\IotMqttSampleAzureIotHub.tsproj
-		SccProjectName1 = IotMqttSampleAzureIotHub
-		SccLocalPath1 = IotMqttSampleAzureIotHub
-		SccProjectUniqueName2 = IotMqttSampleAzureIotHub\\IotMqttSampleAzureIotHub\\IotMqttSampleAzureIotHub.plcproj
-		SccProjectTopLevelParentUniqueName2 = IotMqttSampleAzureIotHub\\IotMqttSampleAzureIotHub.tsproj
-		SccProjectName2 = IotMqttSampleAzureIotHub/IotMqttSampleAzureIotHub
-		SccLocalPath2 = IotMqttSampleAzureIotHub\\IotMqttSampleAzureIotHub
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {070C5513-58F0-4C0E-B4C0-2C81AF544276}
 	EndGlobalSection
 EndGlobal

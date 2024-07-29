@@ -1,0 +1,271 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="PrgMqttCom" Id="{bfc5a8b3-c59c-4b75-b141-5c8be7d91657}" SpecialFunc="None">
+    <Declaration><![CDATA[(* This sample demonstrates the Request/Response mechanism of MQTTv5 as well as how to use UserProperties.
+This PLC application will receive a request message from the broker and will send a response to the specified 
+response topic. Please make sure that your message broker supports MQTTv5. *)
+PROGRAM PrgMqttCom
+VAR
+	hrErrorOccurred	: HRESULT; // contains the latest occurred error
+	hrPropRcv		: HRESULT;
+	hrPropSet		: HRESULT;
+	
+	(* variable declarations for connection handling and set-up *)
+	fbMqttClient	: FB_IotMqtt5Client;
+	bSetParameter	: BOOL := TRUE; // if set to TRUE: sets connection parameters before connection establishment
+	bConnect		: BOOL := TRUE; // if set to TRUE: starts connection establishment to message broker
+	sReasonString	: STRING(255); // MQTTv5 Reason String property
+	
+	(* variable declarations for message handling, the message queue can be referenced directly from fbMqttClient output *)
+	fbMessage		: FB_IotMqtt5Message;
+
+	(* variable declarations for publish properties *)
+	fbPubProps		: FB_IotMqtt5PublishProperties;
+	sContentType	: STRING := 'my specific content';
+	sName_User1		: STRING := 'Fritz';
+	sValue_User1	: STRING := '68 kg';
+	sName_User2		: STRING := 'Uwe';
+	sValue_User2	: STRING := '76 kg';
+	
+	(* variable declarations for subscribe properties *)
+	fbSubProps		: FB_IotMqtt5SubscribeProperties;
+
+	(* variable declarations for ConnAck properties *)
+	bRetainSupported : BOOL;
+
+	(* request/response handling *)
+	bSubscribedReq		: BOOL;			// if subscribed to the request
+	nCorrDataRcvReq		: UDINT;
+	sPayloadReq			: STRING(255) := 'HelloWorld';
+	sPayloadRcv			: STRING(255);
+	sPayloadRes			: STRING(255);
+	sTopicReq			: STRING(255) := 'MyRequest';
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv			: STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sResponseTopicRcv	: STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sContentTypeRcv		: STRING;
+	aSubIdsRcv			: ARRAY[1..100] OF UDINT;
+	i : UINT;
+	aUserName_Rcv		: ARRAY[1..cMaxUserPropsToReceive] OF STRING;
+	aUserValue_Rcv		: ARRAY[1..cMaxUserPropsToReceive] OF STRING;
+	sValueByName		: STRING;
+END_VAR
+VAR CONSTANT
+	cMaxUserPropsToReceive	: UINT := 20; // attend also Tc3_IotBase.ParameterList.cMaxMqtt5UserProps
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// setting connection parameters once (broker address, port, TLS settings, ...)
+IF bSetParameter THEN
+	bSetParameter := FALSE;
+	fbMqttClient.sHostName := 'localhost';
+	fbMqttClient.nHostPort := 1883;
+	
+	// the following code snippet can be used if the message broker supports TLS
+	(*
+	fbMqttClient.nHostPort := 8883;
+	fbMqttClient.stTLS.sCA := 'C:\TwinCAT\3.1\Target\Certificates\rootCA.pem';
+	fbMqttClient.stTLS.sCert := 'C:\TwinCAT\3.1\Target\Certificates\myClientCert.pem';
+	fbMqttClient.stTLS.sKeyFile := 'C:\TwinCAT\3.1\Target\Certificates\myClientPrivateKey.key';
+	*) 
+END_IF
+
+// required: cyclic call of Execute method
+fbMqttClient.Execute(bConnect);
+
+// error handling
+IF fbMqttClient.bError THEN
+	// add your own error handling here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+// demonstrate usage of MQTTv5 ReasonString
+IF NOT fbMqttClient.bConnected AND fbMqttClient.fbDisconnectProps.bPropertiesAvailable THEN
+	sReasonString := fbMqttClient.fbDisconnectProps.sReasonString;
+END_IF
+
+// demonstrates how to access MQTTv5 ConnAckProperties
+IF fbMqttClient.bConnected AND fbMqttClient.fbConnAckProps.bPropertiesAvailable THEN
+	IF fbMqttClient.fbConnAckProps.bRetainAvailable THEN
+		// Message Broker supports retain messages ...
+		bRetainSupported := TRUE;
+	END_IF
+END_IF
+
+// check if any messages have arrived
+IF fbMqttClient.fbMessageQueue.nQueuedMessages > 0 THEN
+	// a message has arrived -> retrieve the message from the queue and work with it
+	IF fbMqttClient.fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		// get the topic on which the message has arrived
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );	
+		// if a message has been received on the response topic, then store the response in a variable (example)
+		IF sTopicRcv = sTopicReq THEN
+			// get payload from received message
+			fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+			// get requested response topic from received message
+			hrPropRcv := fbMessage.GetResponseTopic(pResponseTopic:=ADR(sResponseTopicRcv), nResponseTopicSize:=SIZEOF(sResponseTopicRcv));
+			// get correlation data from message and use it for the response so that sender can correlate the data
+			IF SUCCEEDED(hrPropRcv) THEN		 
+				hrPropRcv := fbMessage.GetCorrelationData(ADR(nCorrDataRcvReq), SIZEOF(nCorrDataRcvReq));
+				IF SUCCEEDED(hrPropRcv) THEN
+					// take payload that has been received in the request and re-use it in the response (just as an example) 
+					sPayloadRes := CONCAT(sPayloadReq, TO_STRING(nCorrDataRcvReq));
+					// response is sent on the response topic that has been specified as part of the request
+				END_IF
+			END_IF
+
+			// get received publish properties
+			sContentTypeRcv := fbMessage.sContentType;
+			IF SUCCEEDED(hrPropRcv) AND fbMessage.nSubIdCnt > 0 THEN
+				hrPropRcv := fbMessage.GetSubIds(aSubIds:=aSubIdsRcv);
+			END_IF
+
+			// get all UserProperties from message
+			IF fbMessage.nUserPropertyCnt > 0 THEN
+				FOR i := 1 TO MIN(fbMessage.nUserPropertyCnt, cMaxUserPropsToReceive) DO
+					IF SUCCEEDED(hrPropRcv) THEN
+						hrPropRcv := fbMessage.GetUserPropertyByIdx(nIdx:=i-1, pName:=ADR(aUserName_Rcv[i]), nNameSize:=SIZEOF(aUserName_Rcv[i]), pValue:=ADR(aUserValue_Rcv[i]), nValueSize:=SIZEOF(aUserValue_Rcv[i]) );
+					END_IF
+				END_FOR
+			END_IF
+
+			// get a specific UserProperty from message
+			IF SUCCEEDED(hrPropRcv) THEN
+				hrPropRcv := fbMessage.GetUserPropertyValueByName(sName := 'Uwe', pValue:=ADR(sValueByName), nValueSize:=SIZEOF(sValueByName) );
+			END_IF
+
+			// set PublishProperties for response
+			fbPubProps.sContentType := sContentType;
+			fbPubProps.nMsgExpiryInterval := 7;
+			fbPubProps.bTopicAlias := TRUE;
+			fbPubProps.bPayloadUtf8 := TRUE;
+			fbPubProps.ClearUserProperties();
+			
+			// add UserProperties to PublishProperties
+			hrPropSet := fbPubProps.AddUserProperty(sName_User1, sValue_User1);
+			hrPropSet := fbPubProps.AddUserProperty(sName_User2, sValue_User2);
+			
+			// send response using the requested response topic and the prepared response message
+			fbMqttClient.Response(	sResponseTopic:= sResponseTopicRcv, 
+									pPayload:= ADR(sPayloadRes), nPayloadSize:= LEN2(ADR(sPayloadRes))+1, 
+									eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE, 
+									pProps:=fbPubProps.pPublishProperties, pCorrelationData:=ADR(nCorrDataRcvReq), nCorrelationDataSize:=SIZEOF(nCorrDataRcvReq) );
+															
+			// error handling
+			IF fbMqttClient.bError THEN
+				// add your own error handling here
+				hrErrorOccurred := fbMqttClient.hrErrorCode;
+			END_IF
+		END_IF
+	END_IF
+END_IF
+
+// execute the following code only when connected to the message broker
+IF fbMqttClient.bConnected THEN
+	// check if a subscription has been created to the request topic. If not, create it.
+	IF NOT bSubscribedReq THEN
+		// set a SubID
+		fbSubProps.nSubId := 17;
+		// subscribe to request topic
+		bSubscribedReq := fbMqttClient.Subscribe(sTopic:=sTopicReq, eQoS:=TcIotMqttQos.AtMostOnceDelivery, pProps:=fbSubProps.pSubscribeProperties);
+		// error handling
+		IF fbMqttClient.bError THEN
+			// add your own error handling here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="693" Count="0" />
+      <LineId Id="6" Count="3" />
+      <LineId Id="838" Count="0" />
+      <LineId Id="775" Count="5" />
+      <LineId Id="774" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="694" Count="0" />
+      <LineId Id="380" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="695" Count="0" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="89" Count="2" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="608" Count="0" />
+      <LineId Id="607" Count="0" />
+      <LineId Id="500" Count="2" />
+      <LineId Id="767" Count="6" />
+      <LineId Id="766" Count="0" />
+      <LineId Id="696" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="697" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="698" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="609" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="610" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="307" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="907" Count="0" />
+      <LineId Id="310" Count="1" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="908" Count="0" />
+      <LineId Id="308" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="312" Count="0" />
+      <LineId Id="430" Count="0" />
+      <LineId Id="432" Count="0" />
+      <LineId Id="431" Count="0" />
+      <LineId Id="433" Count="0" />
+      <LineId Id="611" Count="0" />
+      <LineId Id="606" Count="0" />
+      <LineId Id="428" Count="0" />
+      <LineId Id="328" Count="0" />
+      <LineId Id="320" Count="2" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="429" Count="0" />
+      <LineId Id="612" Count="0" />
+      <LineId Id="379" Count="0" />
+      <LineId Id="330" Count="2" />
+      <LineId Id="480" Count="2" />
+      <LineId Id="485" Count="2" />
+      <LineId Id="699" Count="2" />
+      <LineId Id="489" Count="0" />
+      <LineId Id="493" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="613" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="496" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="495" Count="0" />
+      <LineId Id="909" Count="0" />
+      <LineId Id="912" Count="3" />
+      <LineId Id="911" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="702" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="704" Count="0" />
+      <LineId Id="552" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="705" Count="0" />
+      <LineId Id="95" Count="1" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="916" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

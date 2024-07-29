@@ -1,0 +1,184 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[(* This sample demonstrates how to use the MQTTv5 function blocks to connect to a message broker. 
+It also demonstrates how to publish data, subscribe to a topic and use the ConnAck status information 
+provided by the (MQTTv5) message broker. Please make sure that your message broker supports MQTTv5. *)
+PROGRAM PrgMqttCom
+VAR
+	hrErrorOccurred		: HRESULT; // contains the latest occurred error	
+
+	(* variable declarations for connection handling and set-up *)
+	fbMqttClient		: FB_IotMqtt5Client;
+	bSetParameter		: BOOL := TRUE;
+	bConnect			: BOOL := TRUE;
+	sReasonString		: STRING(255); // MQTTv5 Reason String property
+	
+	(* variable declarations for message handling, the message queue can be referenced directly from fbMqttClient output *)
+	fbMessage		: FB_IotMqtt5Message; // represents a single message
+	
+	(* variable declarations for publish *)
+	sTopicPub		: STRING(255) := 'MyTopic'; // topic that should be used to publish messages
+	sPayloadPub		: STRING(255); // message payload that should be published
+	fbTimer			: TON := (PT:=T#1S); // timer for cyclic publishes
+	rSensor1		: REAL; // fake data for sensor 1
+	nSensor2		: DINT; // fake data for sensor 2
+	bSensor3		: BOOL; // fake data for sensor 3
+	
+	(* variable declarations for subscribe *)
+	bSubscribed		: BOOL; // indicates if a subscription has been created
+	sTopicSub		: STRING(255) := 'MyTopic'; // topic that should be used for the subscription
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv		: STRING(255); // topic on which a message has been received
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv		: STRING(255); // received payload in UTF-8 format
+
+	(* variable declarations for ConnAck properties *)
+	bRetainSupported : BOOL; // indicates if the message broker supports retain messages
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// setting connection parameters once (broker address, port, TLS settings, ...)
+IF bSetParameter THEN
+	bSetParameter := FALSE;
+	fbMqttClient.sHostName := 'localhost';
+	fbMqttClient.nHostPort := 1883;
+	
+	// the following code snippet can be used if the message broker supports TLS
+	(*
+	fbMqttClient.nHostPort := 8883;
+	fbMqttClient.stTLS.sCA := 'C:\TwinCAT\3.1\Target\Certificates\rootCA.pem';
+	fbMqttClient.stTLS.sCert := 'C:\TwinCAT\3.1\Target\Certificates\myClientCert.pem';
+	fbMqttClient.stTLS.sKeyFile := 'C:\TwinCAT\3.1\Target\Certificates\myClientPrivateKey.key';
+	*) 
+END_IF
+
+// required: cyclic call of Execute method
+fbMqttClient.Execute(bConnect);
+
+// error handling
+IF fbMqttClient.bError THEN
+	// add your own error handling here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+// demonstrate usage of MQTTv5 ReasonString
+IF NOT fbMqttClient.bConnected AND fbMqttClient.fbDisconnectProps.bPropertiesAvailable THEN
+	sReasonString := fbMqttClient.fbDisconnectProps.sReasonString;
+END_IF
+
+// demonstrates how to access MQTTv5 ConnAckProperties
+IF fbMqttClient.bConnected AND fbMqttClient.fbConnAckProps.bPropertiesAvailable THEN
+	IF fbMqttClient.fbConnAckProps.bRetainAvailable THEN
+		// Message Broker supports retain messages ...
+		bRetainSupported := TRUE;
+	END_IF
+END_IF
+
+// check if any messages have arrived
+IF fbMqttClient.fbMessageQueue.nQueuedMessages > 0 THEN
+	// a message has arrived -> retrieve the message from the queue and work with it
+	IF fbMqttClient.fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		// get the topic on which the message has arrived
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		// get the message payload
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+	END_IF
+END_IF
+
+// execute the following code only when connected to the message broker
+IF fbMqttClient.bConnected THEN
+	// check if a subscription has been created
+	IF NOT bSubscribed THEN
+		// subscribe to a topic
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery, pProps:=NULL);
+		// error handling
+		IF fbMqttClient.bError THEN
+			// add your ownerror handling here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+	
+	// cyclic publish on rising edge of the timer
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN
+		fbTimer(IN:=FALSE);
+		// define content for message payload, which consists of a JSON document with some fake data and a timestamp
+		rSensor1 := rSensor1 + 0.1;
+		nSensor2 := nSensor2 + 1;
+		bSensor3 := NOT bSensor3;
+		sPayloadPub := F_CreateMessage(rSensor1, nSensor2, bSensor3);
+		// publish the message
+		fbMqttClient.Publish(	sTopic:= sTopicPub, 
+								pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub))+1, 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE, pProps:= 0 );
+		// error handling
+		IF fbMqttClient.bError THEN
+			// add your error handling here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="139" Count="0" />
+      <LineId Id="6" Count="3" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="170" Count="1" />
+      <LineId Id="173" Count="1" />
+      <LineId Id="176" Count="1" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="89" Count="2" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="143" Count="2" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="131" Count="5" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="95" Count="1" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="157" Count="1" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="180" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="254" Count="1" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="99" Count="1" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM PrgMqttCom
 VAR
@@ -30,15 +30,13 @@ END_VAR
     <Implementation>
       <ST><![CDATA[IF bSetParameter THEN
 	bSetParameter := FALSE;
-	fbMqttClient.sHostName:= 'localhost';
-	fbMqttClient.nHostPort:= 1883;
-//	fbMqttClient.sClientId:= 'MyTcMqttClient'; 
-	fbMqttClient.sTopicPrefix:= ''; 
-//	fbMqttClient.nKeepAlive:= 60; 
-//	fbMqttClient.sUserName:= ;
-//	fbMqttClient.sUserPassword:= ; 
-//	fbMqttClient.stWill:= ; 
-//	fbMqttClient.stTLS:= ;
+
+	fbMqttClient.stTLS.sCA := 'c:\Temp\cert\fullChain.pem';
+    fbMqttClient.stTLS.sCert := 'c:\Temp\cert\CX7000.pem';
+    fbMqttClient.stTLS.sKeyFile := 'c:\Temp\cert\CX7000.key';
+	
+	fbMqttClient.sHostName:= 'ba-02715322a393180bf.dev.beckhoff-cloud-instances.com';
+	fbMqttClient.nHostPort:= 8883;
 	fbMqttClient.ipMessageQueue := fbMessageQueue;
 END_IF
 
@@ -79,8 +77,12 @@ IF fbMqttClient.bConnected THEN
 END_IF]]></ST>
     </Implementation>
     <LineIds Name="PrgMqttCom">
-      <LineId Id="6" Count="9" />
-      <LineId Id="60" Count="0" />
+      <LineId Id="6" Count="1" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="130" Count="1" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="8" Count="1" />
       <LineId Id="17" Count="3" />
       <LineId Id="89" Count="2" />
       <LineId Id="88" Count="0" />

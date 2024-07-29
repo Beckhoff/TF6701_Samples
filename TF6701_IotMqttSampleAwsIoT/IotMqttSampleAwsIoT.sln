@@ -1,15 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34301.259
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{B1E792BE-AA5F-4E3C-8C82-674BF9C0715B}") = "IotMqttSampleAwsIoT", "IotMqttSample03\IotMqttSampleAwsIoT.tsproj", "{A8DA0242-2D15-4CBB-ACEE-5C44B353360D}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F9206373-15E4-42E0-AD30-3B859F9BE659}"
-	ProjectSection(SolutionItems) = preProject
-		IotMqttSample03\IotMqttSampleAwsIoT.tszip = IotMqttSample03\IotMqttSampleAwsIoT.tszip
-		IotMqttSample03\root.pem = IotMqttSample03\root.pem
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,17 +49,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://nt-teamfd02:8080/tfs/defaultcollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = IotMqttSample03\\IotMqttSampleAwsIoT.tsproj
-		SccProjectName1 = IotMqttSample03
-		SccLocalPath1 = IotMqttSample03
-		SccProjectUniqueName2 = IotMqttSample03\\PlcIotMqttSampleAwsIoT\\PlcIotMqttSampleAwsIoT.plcproj
-		SccProjectTopLevelParentUniqueName2 = IotMqttSample03\\IotMqttSampleAwsIoT.tsproj
-		SccProjectName2 = IotMqttSample03/PlcIotMqttSampleAwsIoT
-		SccLocalPath2 = IotMqttSample03\\PlcIotMqttSampleAwsIoT
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {94730848-733E-47A0-9B33-E8828647BB53}
 	EndGlobalSection
 EndGlobal

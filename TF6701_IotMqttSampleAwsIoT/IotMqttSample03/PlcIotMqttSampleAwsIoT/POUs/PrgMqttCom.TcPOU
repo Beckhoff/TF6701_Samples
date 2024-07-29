@@ -1,7 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.3">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
   <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
-    <Declaration><![CDATA[PROGRAM PrgMqttCom
+    <Declaration><![CDATA[(* This sample demonstrates how to connect to AWS IoT Core using MQTT. Please make sure to use the correct Amazon Root CA certificate. 
+You can either use self-signed certificates that have been created on the AWS IoT Core management console, or bring your own certificates by registering
+your certificate authority at the AWS IoT Core service. Please consult the AWS documentation for more information.
+In both cases you need to reference the Amazon Root CA certificate in the stTLS.sCA variable. The variables stTLS.sCert and stTLS.sKeyFile 
+contain the file path either to the self-signed client certificate (and private key) or CA-signed certificate (and private key). *)
+PROGRAM PrgMqttCom
 VAR
 	fbMqttClient : FB_IotMqttClient;
 	bSetParameter : BOOL := TRUE;
@@ -35,15 +40,14 @@ END_VAR
 	bSetParameter := FALSE;
 	
 	(* TLS settings for AWS IoT connection *)
-	fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\root.pem';
-    fbMqttClient.stTLS.sCert := 'c:\TwinCAT\3.1\Config\Certificates\7613eee18a-certificate.pem.crt';
-    fbMqttClient.stTLS.sKeyFile := 'c:\TwinCAT\3.1\Config\Certificates\7613eee18a-private.pem.key';
+	fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\AmazonRootCA1.pem'; // Amazon Root CA
+    fbMqttClient.stTLS.sCert := 'c:\TwinCAT\3.1\Config\Certificates\7613eee18a-certificate.pem.crt'; // Either self-signed or CA-signed
+    fbMqttClient.stTLS.sKeyFile := 'c:\TwinCAT\3.1\Config\Certificates\7613eee18a-private.pem.key'; // Private key
 	
 	(* Broker settings für AWS IoT *)
 	fbMqttClient.sHostName:= 'a35rjvy201xp77.iot.eu-west-1.amazonaws.com';
 	fbMqttClient.nHostPort:= 8883;
 	fbMqttClient.sClientId:= 'CX-12345'; 
-	fbMqttClient.sTopicPrefix:= ''; 
 	
 	fbMqttClient.ipMessageQueue := fbMessageQueue;
 END_IF
@@ -88,7 +92,8 @@ END_IF]]></ST>
       <LineId Id="302" Count="0" />
       <LineId Id="304" Count="1" />
       <LineId Id="303" Count="0" />
-      <LineId Id="243" Count="10" />
+      <LineId Id="243" Count="4" />
+      <LineId Id="249" Count="4" />
       <LineId Id="334" Count="0" />
       <LineId Id="343" Count="0" />
       <LineId Id="335" Count="1" />
