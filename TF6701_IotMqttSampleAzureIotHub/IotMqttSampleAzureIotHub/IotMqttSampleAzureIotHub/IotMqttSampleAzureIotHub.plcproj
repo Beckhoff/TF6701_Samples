@@ -6,7 +6,7 @@
     <ProjectGuid>{eacdb616-ef91-40c2-911d-22b2e4934765}</ProjectGuid>
     <SubObjectsSortedByName>True</SubObjectsSortedByName>
     <Name>IotMqttSampleAzureIotHub</Name>
-    <ProgramVersion>3.1.4021.2</ProgramVersion>
+    <ProgramVersion>3.1.4026.15</ProgramVersion>
     <Application>{44f5071e-f37e-4df2-b392-f7e03b81fce6}</Application>
     <TypeSystem>{422386fa-e87b-4b6a-a49e-644495165ace}</TypeSystem>
     <Implicit_Task_Info>{8406fbf0-6c6c-4969-8031-34213807cf6e}</Implicit_Task_Info>

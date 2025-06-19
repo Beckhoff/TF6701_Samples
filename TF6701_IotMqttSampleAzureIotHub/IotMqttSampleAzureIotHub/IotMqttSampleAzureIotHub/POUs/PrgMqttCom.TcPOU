@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+<TcPlcObject Version="1.1.0.1">
   <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
     <Declaration><![CDATA[(* This sample demonstrates how to connect to Microsoft Azure IoT Hub using MQTT. Please make sure to use the right Root CA certificate, Microsoft has
 migrated to a new certificate authority. We recommend the following Microsoft documentation articles that explain how the CA certificate can be retrieved: 
@@ -45,10 +45,19 @@ END_VAR]]></Declaration>
 	//fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\DigiCertGlobalRootG2.cer'; // CA certificate
 	//fbMqttClient.stTLS.sCert := 'c:\TwinCAT\3.1\Config\Certificates\MyDeviceCert.pem';
 	//fbMqttClient.stTLS.sKeyFile := 'c:\TwinCAT\3.1\Config\Certificates\MyDeviceCert.key';
-	//fbMqttClient.sHostName:= myIotHub.azure-devices.net';
-	//fbMqttClient.nHostPort:= 8883;
+	//fbMqttClient.sHostName := myIotHub.azure-devices.net';
+	//fbMqttClient.nHostPort := 8883;
 	//fbMqttClient.sClientId := 'MyDevice';
 	//fbMqttClient.sUserName := 'myIotHub.azure-devices.net/MyDevice/?api-version=2021-04-12';
+	
+	(* Option 3: authentication via Device SAS Token splitted *)
+	//fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\DigiCertGlobalRootG2.cer'; // CA certificate
+	//fbMqttClient.sHostName := myIotHub.azure-devices.net';
+	//fbMqttClient.nHostPort := 8883;
+	//fbMqttClient.stTLS.sVersion := 'tlsv1.2';
+	//fbMqttClient.sClientId := 'MyDevice';
+	//fbMqttClient.sUserName := 'myIotHub.azure-devices.net/MyDevice/?api-version=2021-04-12';
+	//fbMqttClient.sUserPassword := 'SharedAccessSignature sr=myIotHub.azure-devices.net%2Fdevices%2FMyDevice&sig=SAStokenhere&se=17495938573';
 	
 	fbMqttClient.ipMessageQueue := fbMessageQueue;
 END_IF
@@ -90,42 +99,5 @@ IF fbMqttClient.bConnected THEN
 	END_IF
 END_IF]]></ST>
     </Implementation>
-    <LineIds Name="PrgMqttCom">
-      <LineId Id="109" Count="0" />
-      <LineId Id="222" Count="0" />
-      <LineId Id="339" Count="0" />
-      <LineId Id="327" Count="0" />
-      <LineId Id="340" Count="0" />
-      <LineId Id="217" Count="0" />
-      <LineId Id="169" Count="0" />
-      <LineId Id="328" Count="0" />
-      <LineId Id="330" Count="0" />
-      <LineId Id="338" Count="0" />
-      <LineId Id="331" Count="2" />
-      <LineId Id="335" Count="1" />
-      <LineId Id="334" Count="0" />
-      <LineId Id="337" Count="0" />
-      <LineId Id="329" Count="0" />
-      <LineId Id="249" Count="0" />
-      <LineId Id="127" Count="1" />
-      <LineId Id="137" Count="0" />
-      <LineId Id="287" Count="2" />
-      <LineId Id="286" Count="0" />
-      <LineId Id="250" Count="0" />
-      <LineId Id="252" Count="5" />
-      <LineId Id="138" Count="0" />
-      <LineId Id="258" Count="0" />
-      <LineId Id="260" Count="1" />
-      <LineId Id="291" Count="2" />
-      <LineId Id="290" Count="0" />
-      <LineId Id="259" Count="0" />
-      <LineId Id="143" Count="5" />
-      <LineId Id="236" Count="1" />
-      <LineId Id="149" Count="0" />
-      <LineId Id="295" Count="2" />
-      <LineId Id="294" Count="0" />
-      <LineId Id="152" Count="0" />
-      <LineId Id="5" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>
