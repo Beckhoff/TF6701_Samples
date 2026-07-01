@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[(* This sample demonstrates how to use the LastWill feature with our MQTTv5 function blocks. It also demonstrates how to publish data and 
+subscribe to a topic. When establishing the connection to the message broker, a LastWill topic and message are specified, together with
+a custom content type and some user properties. Please make sure that your message broker supports MQTTv5. *)
+PROGRAM PrgMqttCom
+VAR
+	hrErrorOccurred	: HRESULT; // contains the latest occurred error	
+
+	(* variable declarations for connection handling and set-up *)
+	fbMqttClient	: FB_IotMqtt5Client;
+	bSetParameter	: BOOL := TRUE;
+	bConnect		: BOOL := TRUE;
+	sReasonString	: STRING(255); // MQTTv5 Reason String property
+	
+	(* variable declarations for message handling, the message queue can be referenced directly from fbMqttClient output *)
+	fbMessage		: FB_IotMqtt5Message; // represents a single message
+	
+	(* variable declarations for publish *)
+	sTopicPub		: STRING(255) := 'MyTopic'; // topic that should be used to publish messages
+	sPayloadPub		: STRING(255); // message payload that should be published
+	fbTimer			: TON := (PT:=T#1S); // timer for cyclic publishes
+	rSensor1		: REAL; // fake data for sensor 1
+	nSensor2		: DINT; // fake data for sensor 2
+	bSensor3		: BOOL; // fake data for sensor 3
+	
+	(* variable declarations for subscribe *)
+	bSubscribed		: BOOL; // indicates if a subscription has been created
+	sTopicSub		: STRING(255) := 'MyTopic'; // topic that should be used for the subscription
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv		: STRING(255); // topic on which a message has been received
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv		: STRING(255); // received payload in UTF-8 format
+
+	(* variable declarations for LastWill *)
+	sLastWillMsg	: STRING(255) := 'I will be back!';
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// setting connection parameters once (broker address, port, TLS settings, LastWill, ...)
+IF bSetParameter THEN
+	bSetParameter := FALSE;
+	fbMqttClient.sHostName := 'localhost';
+	fbMqttClient.nHostPort := 1883;
+	
+	// the following code snippet can be used if the message broker supports TLS
+	(*
+	fbMqttClient.nHostPort := 8883;
+	fbMqttClient.stTLS.sCA := 'C:\TwinCAT\3.1\Target\Certificates\rootCA.pem';
+	fbMqttClient.stTLS.sCert := 'C:\TwinCAT\3.1\Target\Certificates\myClientCert.pem';
+	fbMqttClient.stTLS.sKeyFile := 'C:\TwinCAT\3.1\Target\Certificates\myClientPrivateKey.key';
+	*)
+	
+	(* the following code snippet demonstrates handling of the LastWill feature. We will set
+	a LastWill topic, message payload, content type, QoS level and a user property. 
+    Additional properties are available and may be used according to your specific use case. *)
+	fbMqttClient.stWill.sTopic := 'MyLastWillTopic';
+	fbMqttClient.stWill.sContentType := 'MyContentType';
+	fbMqttClient.stWill.eQoS := TcIotMqttQoS.ExactlyOnceDelivery;
+	fbMqttClient.stWill.fbPayload.SetData(ADR(sLastWillMsg), SIZEOF(sLastWillMsg));
+	fbMqttClient.stWill.fbUserProperties.AddUserProperty('MyFirst', 'UserProperty');
+END_IF
+
+// required: cyclic call of Execute method
+fbMqttClient.Execute(bConnect);
+
+// error handling
+IF fbMqttClient.bError THEN
+	// add your own error handling here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+// check if any messages have arrived
+IF fbMqttClient.fbMessageQueue.nQueuedMessages > 0 THEN
+	// a message has arrived -> retrieve the message from the queue and work with it
+	IF fbMqttClient.fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		// get the topic on which the message has arrived
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		// get the message payload
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+	END_IF
+END_IF
+
+// execute the following code only when connected to the message broker
+IF fbMqttClient.bConnected THEN
+	// check if a subscription has been created
+	IF NOT bSubscribed THEN
+		// subscribe to a topic
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery, pProps:=NULL);
+		// error handling
+		IF fbMqttClient.bError THEN
+			// add your ownerror handling here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+	
+	// cyclic publish on rising edge of the timer
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN
+		fbTimer(IN:=FALSE);
+		// define content for message payload, which consists of a JSON document with some fake data and a timestamp
+		rSensor1 := rSensor1 + 0.1;
+		nSensor2 := nSensor2 + 1;
+		bSensor3 := NOT bSensor3;
+		sPayloadPub := F_CreateMessage(rSensor1, nSensor2, bSensor3);
+		// publish the message
+		fbMqttClient.Publish(	sTopic:= sTopicPub, 
+								pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub))+1, 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE, pProps:= 0 );
+		// error handling
+		IF fbMqttClient.bError THEN
+			// add your error handling here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="224" Count="4" />
+      <LineId Id="331" Count="0" />
+      <LineId Id="229" Count="54" />
+      <LineId Id="368" Count="3" />
+      <LineId Id="286" Count="10" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

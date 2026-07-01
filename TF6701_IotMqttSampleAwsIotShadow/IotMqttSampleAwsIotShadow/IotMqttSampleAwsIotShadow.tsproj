@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4022.30">
+	<Project SccProjectName="SAK" SccAuxPath="SAK" SccLocalPath="SAK" SccProvider="SAK" ProjectGUID="{B68167BF-FC85-4273-8DD8-F2E42F84BBDD}" Target64Bit="true" ShowHideConfigurations="#x306">
+		<System>
+			<Tasks>
+				<Task Id="3" Priority="20" CycleTime="100000" AmsPort="350" AdtTasks="true">
+					<Name>PlcTask</Name>
+				</Task>
+			</Tasks>
+		</System>
+		<Plc>
+			<Project GUID="{532EFDAE-5406-4B07-AEFE-A0EB4825057E}" Name="PlcIotMqttSampleAwsIotShadow" PrjFilePath="PlcIotMqttSampleAwsIotShadow\PlcIotMqttSampleAwsIotShadow.plcproj" TmcFilePath="PlcIotMqttSampleAwsIotShadow\PlcIotMqttSampleAwsIotShadow.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x0002" FileArchiveSettings="#x0002" CopyTmcToTarget="true" CopyTpyToTarget="false" SymbolicMapping="true">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2">
+					<Name>PlcIotMqttSampleAwsIotShadow Instance</Name>
+					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
+					<TaskPouOids>
+						<TaskPouOid Prio="20" OTCID="#x08502001"/>
+					</TaskPouOids>
+				</Instance>
+			</Project>
+		</Plc>
+	</Project>
+</TcSmProject>

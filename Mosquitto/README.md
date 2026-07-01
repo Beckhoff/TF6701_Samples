@@ -1,0 +1,2 @@
+# Mosquitto configuration files
+This folder contains sample configuration files for the Mosquitto message broker. These configuration files are also documented in the appendix of the [TF6701 documentation](https://infosys.beckhoff.com/content/1033/tf6701_tc3_iot_communication_mqtt/index.html). These files are provided as-is and have been added to this repository to help TF6701 users get started with MQTT. For further information about the Mosquitto message broker and official documentation please visit the [Mosquitto website](https://www.mosquitto.org).

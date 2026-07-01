@@ -1,0 +1,342 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PrgMqttCom
+VAR
+	fbMqttClient : FB_IotMqttClient;
+	fbMessageQueue : FB_IotMqttMessageQueue;
+	fbMessage : FB_IotMqttMessage;
+	hrErrorOccurred : HRESULT; // contains the latest occurred error
+	bSetParameter : BOOL := TRUE;
+	bConnect : BOOL := TRUE;
+	fbGetTime : GETSYSTEMTIME;
+	ftTemp : T_FileTime;
+	dtTimestamp : DT;
+	
+	(* Topic parsing *)
+	fbTopicInfos : FB_TopicInfos();
+	
+	(* IoT Hub Telemetry Data *)
+	sTopicTelemtry : STRING(255) := 'devices/CX-12345/messages/events/readpipe/'; // Insert correct DeviceId
+	sTopicCloud2Device : STRING(255) := 'devices/CX-12345/messages/devicebound/#'; // Insert correct DeviceId
+	sTelemetryData : STRING(2000);
+	bSubscribed : BOOL; // Indicates that the MQTT driver has successfully subscribed to the Cloud2Device topic	
+	i: UDINT;
+	fbTimer : TON := (PT:=T#1S); // timer to send telemetry data
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv : STRING(255);
+	{attribute 'TcEncoding':='UTF-8'}
+	sCloud2DeviceMessage : STRING(255);
+	
+	(* Device Twin topics *)
+	sTopicTwinResponses : STRING(255) := '$$iothub/twin/res/#';
+	sTopicTwinGetBase : STRING(255) := '$$iothub/twin/GET/?$$rid=';
+	sTopicTwinUpdateBase : STRING(255) := '$$iothub/twin/PATCH/properties/reported/?$$rid=';
+	sTopicTwinDesired : STRING(255) := '$$iothub/twin/PATCH/properties/desired/#';
+	sTopicTwinMethodsPost : STRING(255) := '$$iothub/methods/POST/#';
+	sTopicTwinMethodsResBase : STRING(255) := '$$iothub/methods/res/'; 
+	sTopicTwinMethodsResActual : STRING(255) := '';
+	sTopicTwinGetActual : STRING(255);
+	sTopicTwinUpdateActual : STRING(255);
+	sTopicInfos : STRING(255);
+	
+	(* Device Twin method call *)
+	sTwinMethodCallName : STRING(255);
+	sTwinMethodCallId : STRING(255);
+	sTwinMethodCallContent : STRING(255);
+	
+	(* Device Twin response *)
+	sTwinResponse : STRING(255);
+	
+	(* Device Twin actions and trigger *)
+	bTwinGet : BOOL := FALSE; // Receives the current Device Twin document (received in sTwinResponse)
+	bTwinUpdate : BOOL := FALSE; // Starts an UPDATE operation on the Device Twin
+	bTwinDeleteProperty : BOOL := FALSE; // Deletes a property from the Device Twin
+	bTwinMethodCallReceived : BOOL := FALSE; // Indicates that a MethodCall has been received by the Device Twin
+	bTwinSubscribed : BOOL := FALSE; // Indicates that the MQTT driver has successfully subscribed to the Device Twin Response topic
+	bTwinDesiredSubscribed : BOOL := FALSE; // Indicates that the MQTT driver has successfully subscribed to the Device Twin Desired topic
+	bTwinMethodsPostSubscribed : BOOL := FALSE; // Indicates that the MQTT driver has successfully subscribed to the Device Twin MethodCall topic
+	
+	(* Temporary variables to either GET or UPDATE the Device Twin *)
+	sJsonTwinGet : STRING(0); // Empty content to receive Device Twin document
+	sJsonTwinUpdate : STRING(255); // Stores updates for the Device Twin
+	
+	nTwinRequestId : UINT := 1;
+	nResStatusCode : UDINT;
+	nResRequestId : UDINT;
+	
+	(* JSON parsing *)
+	fbJson      : FB_JsonSaxWriter;
+	fbJsonTwinUpdate : FB_JsonSaxWriter;
+
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bSetParameter THEN
+	bSetParameter := FALSE;
+	fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\Azure\BaltimoreRoot.cer'; // CA certificate 
+	fbMqttClient.stTLS.sAzureSas := 'HostName=beckhoff-automation.azure-devices.net;DeviceId=CX-12345;SharedAccessSignature=SharedAccessSignature sr=beckhoff-automation.azure-devices.net%2Fdevices%2FCX-12345&sig=PHAG36uxZw9s1przM25YmwViKIG6twB0YSEUW45xJDk%3D&se=1613540738'; // Device SAS Token
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+END_IF
+
+fbMqttClient.Execute(bConnect);
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+(* Check for received messages and parse them *)
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv));
+		fbTopicInfos(sTopic := sTopicRcv);
+		IF fbTopicInfos.IsSystemTopic() THEN
+			(* Message comes from one of the system topics - now check which one (Methods or Twin) *)
+			IF fbTopicInfos.IsMethodCallTopic() THEN
+				(* Message is an incoming method call -> extract MethodName, MethodId and MethodContent *)
+				(* MethodName and MethodId are part of the topic, MethodContent is in message payload *)
+				bTwinMethodCallReceived := TRUE;
+				fbMessage.GetPayload(pPayload:=ADR(sTwinMethodCallContent), nPayloadSize:=SIZEOF(sTwinMethodCallContent), bSetNullTermination:=TRUE);
+			ELSE
+				(* Message is a regular response -> extract StatusCode and RequestId *)
+				(* StatusCode and RequestId are part of the topic *)				
+				IF fbTopicInfos.StatusCode <> 200 THEN
+					// request wasn't successful - do something
+					;
+				END_IF
+				fbMessage.GetPayload(pPayload:=ADR(sTwinResponse), nPayloadSize:=SIZEOF(sTwinResponse), bSetNullTermination:=TRUE);					
+			END_IF
+		ELSE
+			(* Message is a Cloud2Device message *)
+			fbMessage.GetPayload(pPayload:=ADR(sCloud2DeviceMessage), nPayloadSize:=SIZEOF(sCloud2DeviceMessage), bSetNullTermination:=TRUE);
+		END_IF
+	END_IF
+END_IF
+
+IF fbMqttClient.bConnected THEN
+
+	(* Subscribe to all required Device Twin topics *)
+	IF NOT bSubscribed THEN
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicCloud2Device, eQoS:=TcIotMqttQos.AtLeastOnceDelivery);
+	END_IF
+	IF NOT bTwinSubscribed THEN
+		bTwinSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicTwinResponses, eQoS:=TcIotMqttQos.AtLeastOnceDelivery);
+	END_IF
+	IF NOT bTwinDesiredSubscribed THEN
+		bTwinDesiredSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicTwinDesired, eQoS:=TcIotMqttQos.AtLeastOnceDelivery);
+	END_IF
+	IF NOT bTwinMethodsPostSubscribed THEN
+		bTwinMethodsPostSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicTwinMethodsPost, eQoS:=TcIotMqttQos.AtLeastOnceDelivery);
+	END_IF
+
+	(* Receives the Device Twin document *)
+	IF bTwinGet THEN
+		bTwinGet := FALSE;
+		sTopicTwinGetActual := CONCAT(sTopicTwinGetBase, UINT_TO_STRING(nTwinRequestId));
+		nTwinRequestId := nTwinRequestId + 1;
+		fbMqttClient.Publish(	sTopic:= sTopicTwinGetActual, 
+								pPayload:= ADR(sJsonTwinGet), nPayloadSize:= 0, 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );		
+	END_IF
+	
+	(* Updates the Device Twin document *)
+	IF bTwinUpdate THEN
+		bTwinUpdate := FALSE;
+		sTopicTwinUpdateActual := CONCAT(sTopicTwinUpdateBase, UINT_TO_STRING(nTwinRequestId));
+		nTwinRequestId := nTwinRequestId + 1;			
+		fbJsonTwinUpdate.StartObject();
+		fbJsonTwinUpdate.AddKey('OperatingSystem');
+		fbJsonTwinUpdate.AddString('Windows 10 IoT Enterprise');
+		fbJsonTwinUpdate.AddKey('Hostname');
+		fbJsonTwinUpdate.AddString('CX-12345');
+		fbJsonTwinUpdate.AddKey('TwinCatVersion');
+		fbJsonTwinUpdate.AddString('3.1 Build 4024.7');		
+		fbJsonTwinUpdate.EndObject();
+		sJsonTwinUpdate := fbJsonTwinUpdate.GetDocument();
+		fbJsonTwinUpdate.ResetDocument();
+		fbMqttClient.Publish(	sTopic:= sTopicTwinUpdateActual, 
+								pPayload:= ADR(sJsonTwinUpdate), nPayloadSize:= LEN2(ADR(sJsonTwinUpdate)), 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );		
+	END_IF
+	
+	(* Removes a property from the Device Twin *)
+	IF bTwinDeleteProperty THEN
+		bTwinDeleteProperty := FALSE;
+		sTopicTwinUpdateActual := CONCAT(sTopicTwinUpdateBase, UINT_TO_STRING(nTwinRequestId));
+		nTwinRequestId := nTwinRequestId + 1;
+		fbJsonTwinUpdate.StartObject();
+		fbJsonTwinUpdate.AddKey('TwinCatVersion');
+		fbJsonTwinUpdate.AddNull();		
+		fbJsonTwinUpdate.EndObject();
+		sJsonTwinUpdate := fbJsonTwinUpdate.GetDocument();
+		fbJsonTwinUpdate.ResetDocument();
+		fbMqttClient.Publish(	sTopic:= sTopicTwinUpdateActual, 
+								pPayload:= ADR(sJsonTwinUpdate), nPayloadSize:= LEN2(ADR(sJsonTwinUpdate)), 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );		
+	END_IF
+	
+	(* Incoming method call detected *)
+	IF bTwinMethodCallReceived THEN
+		IF fbTopicInfos.MethodName = 'MethodName' THEN
+			// Method "MethodName" has been called - do something and send response
+			// In this example, the response always contains the current telemtry message
+			;
+		END_IF
+		sTopicTwinMethodsResActual := CONCAT(sTopicTwinMethodsResBase, '0'); // Return StatusCode of method call- always '0' in this sample
+		sTopicTwinMethodsResActual := CONCAT(sTopicTwinMethodsResActual, '/?');
+		sTopicTwinMethodsResActual := CONCAT(sTopicTwinMethodsResActual, '$$rid=');
+		sTopicTwinMethodsResActual := CONCAT(sTopicTwinMethodsResActual, fbTopicInfos.MethodID); // MethodCallId
+		fbMqttClient.Publish(	sTopic:= sTopicTwinMethodsResActual, 
+						pPayload:= ADR(sTelemetryData), nPayloadSize:= LEN2(ADR(sTelemetryData)), 
+						eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+		bTwinMethodCallReceived := FALSE;
+		sTopicTwinMethodsResActual := '';
+	END_IF
+	
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN // publish new payload every second
+		fbTimer(IN:=FALSE);
+		i := i + 1;
+
+		(* Generate timestamp *)
+		fbGetTime(timeLoDW => ftTemp.dwLowDateTime, timeHiDW => ftTemp.dwHighDateTime);
+		dtTimestamp := FILETIME_TO_DT(ftTemp);
+		
+		(* JSON document is created here *)				
+		fbJson.StartObject();
+		fbJson.AddKey('Timestamp');
+		fbJson.AddDateTime(dtTimestamp);
+		fbJson.AddKey('Sensor1');
+		fbJson.AddReal(42.42);
+		fbJson.AddKey('Sensor2');
+		fbJson.AddDint(42);
+		fbJson.AddKey('Sensor3');
+		fbJson.AddBool(TRUE);
+		fbJson.EndObject();
+		sTelemetryData := fbJson.GetDocument();
+		fbJson.ResetDocument();
+		
+		fbMqttClient.Publish(	sTopic:= sTopicTelemtry, 
+								pPayload:= ADR(sTelemetryData), nPayloadSize:= LEN2(ADR(sTelemetryData)), 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+								
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="109" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="127" Count="1" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="522" Count="2" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="701" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="252" Count="2" />
+      <LineId Id="822" Count="0" />
+      <LineId Id="828" Count="0" />
+      <LineId Id="842" Count="0" />
+      <LineId Id="829" Count="0" />
+      <LineId Id="843" Count="1" />
+      <LineId Id="831" Count="0" />
+      <LineId Id="837" Count="0" />
+      <LineId Id="833" Count="0" />
+      <LineId Id="846" Count="0" />
+      <LineId Id="845" Count="0" />
+      <LineId Id="838" Count="1" />
+      <LineId Id="847" Count="0" />
+      <LineId Id="840" Count="0" />
+      <LineId Id="834" Count="0" />
+      <LineId Id="832" Count="0" />
+      <LineId Id="835" Count="0" />
+      <LineId Id="841" Count="0" />
+      <LineId Id="836" Count="0" />
+      <LineId Id="830" Count="0" />
+      <LineId Id="256" Count="1" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="744" Count="0" />
+      <LineId Id="729" Count="0" />
+      <LineId Id="260" Count="1" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="397" Count="2" />
+      <LineId Id="473" Count="2" />
+      <LineId Id="657" Count="2" />
+      <LineId Id="547" Count="0" />
+      <LineId Id="382" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="393" Count="0" />
+      <LineId Id="384" Count="0" />
+      <LineId Id="387" Count="0" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="388" Count="0" />
+      <LineId Id="385" Count="0" />
+      <LineId Id="383" Count="0" />
+      <LineId Id="546" Count="0" />
+      <LineId Id="439" Count="0" />
+      <LineId Id="441" Count="0" />
+      <LineId Id="467" Count="0" />
+      <LineId Id="466" Count="0" />
+      <LineId Id="445" Count="0" />
+      <LineId Id="448" Count="1" />
+      <LineId Id="461" Count="0" />
+      <LineId Id="460" Count="0" />
+      <LineId Id="463" Count="0" />
+      <LineId Id="462" Count="0" />
+      <LineId Id="454" Count="2" />
+      <LineId Id="458" Count="1" />
+      <LineId Id="443" Count="0" />
+      <LineId Id="442" Count="0" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="545" Count="0" />
+      <LineId Id="526" Count="0" />
+      <LineId Id="528" Count="0" />
+      <LineId Id="531" Count="0" />
+      <LineId Id="530" Count="0" />
+      <LineId Id="533" Count="0" />
+      <LineId Id="538" Count="6" />
+      <LineId Id="532" Count="0" />
+      <LineId Id="529" Count="0" />
+      <LineId Id="527" Count="0" />
+      <LineId Id="728" Count="0" />
+      <LineId Id="663" Count="0" />
+      <LineId Id="723" Count="1" />
+      <LineId Id="727" Count="0" />
+      <LineId Id="726" Count="0" />
+      <LineId Id="725" Count="0" />
+      <LineId Id="716" Count="0" />
+      <LineId Id="719" Count="2" />
+      <LineId Id="667" Count="1" />
+      <LineId Id="665" Count="0" />
+      <LineId Id="669" Count="0" />
+      <LineId Id="722" Count="0" />
+      <LineId Id="666" Count="0" />
+      <LineId Id="664" Count="0" />
+      <LineId Id="144" Count="3" />
+      <LineId Id="753" Count="0" />
+      <LineId Id="750" Count="0" />
+      <LineId Id="345" Count="0" />
+      <LineId Id="752" Count="0" />
+      <LineId Id="751" Count="0" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="331" Count="2" />
+      <LineId Id="336" Count="5" />
+      <LineId Id="343" Count="1" />
+      <LineId Id="329" Count="1" />
+      <LineId Id="236" Count="1" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="738" Count="0" />
+      <LineId Id="295" Count="2" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

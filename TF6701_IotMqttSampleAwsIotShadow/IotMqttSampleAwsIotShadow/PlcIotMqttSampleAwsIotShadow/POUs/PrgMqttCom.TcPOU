@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4022.18">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PrgMqttCom
+VAR
+	fbMqttClient 					: FB_IotMqttClient;
+	bSetParameter 					: BOOL := TRUE;
+	bConnect 						: BOOL := TRUE;
+	hrErrorOccurred 				: HRESULT;
+	
+	(* AWS IoT Shadow  *)
+	sTopicShadowUpdate	 			: STRING(255) := '$$aws/things/SvenG-NB05/shadow/update';
+	sTopicShadowDocument			: STRING(255) := '$$aws/things/SvenG-NB05/shadow/update/documents';
+	sPayloadShadowUpdate			: STRING(1000);
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadShadowDocumentRcv		: STRING(1000);
+	bShadowUpdate					: BOOL;
+	bShadowDocumentSubscribed		: BOOL;
+	
+	(* received message and queue handling *)	
+	fbMessageQueue 					: FB_IotMqttMessageQueue;
+	fbMessage 						: FB_IotMqttMessage;
+
+	(* JSON *)
+	fbJson      					: FB_JsonSaxWriter;
+
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bSetParameter THEN
+	bSetParameter := FALSE;
+	
+	(* TLS settings for AWS IoT connection *)
+	fbMqttClient.stTLS.sCA := 'c:\TwinCAT\3.1\Config\Certificates\AWS\AmazonRootCA1.pem';
+    fbMqttClient.stTLS.sCert := 'c:\TwinCAT\3.1\Config\Certificates\AWS\6a1ba937cb-certificate.pem.crt';
+    fbMqttClient.stTLS.sKeyFile := 'c:\TwinCAT\3.1\Config\Certificates\AWS\6a1ba937cb-private.pem.key';
+	
+	(* Broker settings für AWS IoT *)
+	fbMqttClient.sHostName:= 'a35rjvy201xp77-ats.iot.eu-central-1.amazonaws.com';
+	fbMqttClient.nHostPort:= 8883;
+	fbMqttClient.sClientId:= 'SvenG-NB05'; 
+
+	fbMqttClient.ipMessageQueue := fbMessageQueue;
+END_IF
+
+fbMqttClient.Execute(bConnect);
+
+IF fbMqttClient.bError THEN
+	// add your error logging here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+IF fbMessageQueue.nQueuedMessages > 0 THEN
+	IF fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		fbMessage.GetTopic(pTopic:=ADR(sTopicShadowDocument), nTopicSize:=SIZEOF(sTopicShadowDocument) );
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadShadowDocumentRcv), nPayloadSize:=SIZEOF(sPayloadShadowDocumentRcv), bSetNullTermination:=FALSE);
+	END_IF
+END_IF
+
+IF fbMqttClient.bConnected THEN
+	IF NOT bShadowDocumentSubscribed THEN
+		bShadowDocumentSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicShadowDocument, eQoS:=TcIotMqttQos.AtMostOnceDelivery);
+		IF fbMqttClient.bError THEN
+			// add your error logging here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+
+	IF bShadowUpdate THEN // update shadow on demand
+		bShadowUpdate := FALSE;
+		
+		// JSON format according to https://docs.aws.amazon.com/iot/latest/developerguide/device-shadow-mqtt.html
+		fbJson.StartObject();
+		fbJson.AddKey('state');
+		fbJson.StartObject();
+		fbJson.AddKey('reported');
+		fbJson.StartObject();		
+		fbJson.AddKey('Vendor');
+		fbJson.AddString('Beckhoff Automation');
+		fbJson.AddKey('CpuTemperature');
+		fbJson.AddDint(42);
+		fbJson.AddKey('Operating System');
+		fbJson.AddString('FreeBSD');
+		fbJson.EndObject();
+		fbJson.EndObject();
+		fbJson.EndObject();
+		sPayloadShadowUpdate := fbJson.GetDocument();
+		fbJson.ResetDocument();
+	
+		fbMqttClient.Publish(	sTopic:= sTopicShadowUpdate, 
+								pPayload:= ADR(sPayloadShadowUpdate), nPayloadSize:= LEN2(ADR(sPayloadShadowUpdate)), 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE );
+								
+		IF fbMqttClient.bError THEN
+				// add your error logging here			
+				hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="235" Count="2" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="304" Count="1" />
+      <LineId Id="303" Count="0" />
+      <LineId Id="243" Count="4" />
+      <LineId Id="374" Count="0" />
+      <LineId Id="507" Count="0" />
+      <LineId Id="251" Count="2" />
+      <LineId Id="450" Count="0" />
+      <LineId Id="334" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="335" Count="1" />
+      <LineId Id="254" Count="9" />
+      <LineId Id="338" Count="0" />
+      <LineId Id="344" Count="0" />
+      <LineId Id="339" Count="0" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="264" Count="2" />
+      <LineId Id="520" Count="0" />
+      <LineId Id="548" Count="1" />
+      <LineId Id="522" Count="0" />
+      <LineId Id="525" Count="1" />
+      <LineId Id="537" Count="0" />
+      <LineId Id="536" Count="0" />
+      <LineId Id="527" Count="7" />
+      <LineId Id="538" Count="0" />
+      <LineId Id="535" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="521" Count="0" />
+      <LineId Id="270" Count="2" />
+      <LineId Id="540" Count="0" />
+      <LineId Id="419" Count="0" />
+      <LineId Id="345" Count="0" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="340" Count="0" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="539" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

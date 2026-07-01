@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.3">
+  <POU Name="F_GetTopicInfos" Id="{7248ad8a-cd46-455b-be73-24fb8f9c8cc7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_GetTopicInfos : STRING(255)
+VAR_INPUT
+	sTopic : STRING(255);
+END_VAR
+VAR
+	nTopicLength : UDINT;
+	nSubTopicLength : UDINT;
+	sTopicParser_1 : STRING;
+	nMethodsPos : INT;
+	nPos : INT;
+	sTopicParser_2 : STRING;
+	sTopicParser_3 : STRING;
+	sTopicParser_4 : STRING;
+	sTopicParser_5 : STRING;
+	fbJson : FB_JsonSaxWriter;
+	nOperationStatusCode : UINT;
+	nOperationRequestId : UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[sTopicParser_1 := LEFT(sTopic, 7);
+nTopicLength := LEN2(ADR(sTopic));
+IF sTopicParser_1 = '$$iothub' THEN // Device Twin system topic ?
+	(* Check if the topic is a MethodCall topic *)
+	nMethodsPos := FIND(sTopic, 'methods');	
+	fbJson.StartObject();
+	fbJson.AddKey('IsIoTHubSystemTopic');
+	fbJson.AddBool(TRUE);
+	fbJson.AddKey('IsMethodTopic');
+	IF nMethodsPos <> 0 THEN
+		fbJson.AddBool(TRUE);
+		(* format of method topic : $iothub/methods/POST/{method name}/?$rid={request id} *)
+		sTopicParser_2 := MID(sTopic, 21, 1); // $$iothub/methods/POST/
+		sTopicParser_3 := RIGHT(sTopic, UDINT_TO_INT(nTopicLength - 21)); // {method name}/?$rid={request id}
+		nSubTopicLength := LEN2(ADR(sTopicParser_3));
+		nPos := FIND(sTopicParser_3, '/');
+		sTopicParser_4 := LEFT(sTopicParser_3, nPos - 1); 
+		fbJson.AddKey('MethodName');
+		fbJson.AddString(sTopicParser_4);
+		fbJson.AddKey('MethodId');
+		nPos := FIND(sTopicParser_3, '=');
+		sTopicParser_5 := RIGHT(sTopicParser_3, UDINT_TO_INT(nSubTopicLength - nPos)); 
+		fbJson.AddString(sTopicParser_5);
+	ELSE
+		fbJson.AddBool(FALSE);
+		sTopicParser_2 := LEFT(sTopic, 20);
+		sTopicParser_3 := RIGHT(sTopicParser_2, 3); // Response status code
+		nOperationStatusCode := STRING_TO_UINT(sTopicParser_3);
+		fbJson.AddKey('StatusCode');
+		fbJson.AddDint(nOperationStatusCode);
+		sTopicParser_4 := RIGHT(sTopic, UDINT_TO_INT(nTopicLength - 21)); // get last sub-topic
+		sTopicParser_5 := MID(sTopicParser_4, UDINT_TO_INT(LEN2(ADR(sTopicParser_4))) - FIND(sTopicParser_4, '='), 7); // retrieve RequestId from response
+		nOperationRequestId := STRING_TO_UINT(sTopicParser_5);
+		fbJson.AddKey('RequestId');
+		fbJson.AddDint(nOperationRequestId);
+	END_IF	
+	fbJson.EndObject();
+	F_GetTopicInfos := fbJson.GetDocument();
+	fbJson.ResetDocument();	
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="F_GetTopicInfos">
+      <LineId Id="84" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="86" Count="2" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="154" Count="2" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="137" Count="4" />
+      <LineId Id="143" Count="3" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="100" Count="2" />
+      <LineId Id="28" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

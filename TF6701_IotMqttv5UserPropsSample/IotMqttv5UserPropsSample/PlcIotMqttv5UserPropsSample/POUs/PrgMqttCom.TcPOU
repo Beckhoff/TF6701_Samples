@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="PrgMqttCom" Id="{c70f107a-6ca5-4bfb-b775-e2929cbf9dae}" SpecialFunc="None">
+    <Declaration><![CDATA[(* This sample demonstrates the UserProperties feature of MQTTv5. This PLC application will 
+publish a message to the broker and will also subscribe to the same topic in order to receive 
+the message again. The message contains custom UserProperties that are sent back and forth.
+Please make sure that your message broker supports MQTTv5. *)
+PROGRAM PrgMqttCom
+VAR
+	hrErrorOccurred	: HRESULT; // contains the latest occurred error
+	hrPropSet		: HRESULT;
+	
+	(* variable declarations for connection handling and set-up *)
+	fbMqttClient	: FB_IotMqtt5Client; // basic object for connection handling
+	bSetParameter	: BOOL := TRUE; // if set to TRUE: sets connection parameters before connection establishment
+	bConnect		: BOOL := TRUE; // if set to TRUE: starts connection establishment to message broker
+	sReasonString	: STRING(255); // MQTTv5 Reason String property
+	
+	(* variable declarations for message handling, the message queue can be referenced directly from fbMqttClient output *)
+	fbMessage		: FB_IotMqtt5Message; // represents a single message
+	
+	(* variable declarations for publish *)
+	sTopicPub		: STRING(255) := 'MyTopic'; // topic that should be used to publish messages
+	sPayloadPub		: STRING(255); // message payload that should be published
+	fbTimer			: TON := (PT:=T#1S); // timer for cyclic publishes
+	rSensor1		: REAL; // fake data for sensor 1
+	nSensor2		: DINT; // fake data for sensor 2
+	bSensor3		: BOOL; // fake data for sensor 3
+	
+	(* variable declarations for subscribe *)
+	bSubscribed		: BOOL; // indicates if a subscription has been created
+	sTopicSub		: STRING(255) := 'MyTopic'; // topic that should be used for the subscription
+	{attribute 'TcEncoding':='UTF-8'}
+	sTopicRcv		: STRING(255); // topic on which a message has been received
+	{attribute 'TcEncoding':='UTF-8'}
+	sPayloadRcv		: STRING(255); // received payload in UTF-8 format
+	hrPropRcv		: HRESULT;
+	aName_UserRcv	: ARRAY[1..10] OF STRING;
+	aValue_UserRcv	: ARRAY[1..10] OF STRING;
+	sValueByName	: STRING;
+	j, m : UINT;
+	
+	(* variable declarations for publish properties *)
+	fbPubProps		: FB_IotMqtt5PublishProperties; // Data structure that contains publish properties
+	sContentType	: STRING := 'my specific content'; // Content type for publish propertie
+	aUserName		: ARRAY[1..10] OF STRING := [5('Fritz'), 4('Uwe'), 1('Sven')]; // User properties (keys) that will be send as part of the publish properties
+	aUserValue		: ARRAY[1..10] OF STRING := [5('68 kg'), 4('76 kg'), 1('83 kg')];	// User properties (values) that will be send as part of the publish properties
+
+	(* variable declarations for subscribe properties *)
+	fbSubProps		: FB_IotMqtt5SubscribeProperties;
+
+	(* variable declarations for ConnAck properties *)
+	bRetainSupported : BOOL;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// setting connection parameters once (broker address, port, TLS settings, ...)
+IF bSetParameter THEN
+	bSetParameter := FALSE;
+	fbMqttClient.sHostName := 'localhost';
+	fbMqttClient.nHostPort := 1883;
+	
+	// the following code snippet can be used if the message broker supports TLS
+	(*
+	fbMqttClient.nHostPort := 8883;
+	fbMqttClient.stTLS.sCA := 'C:\TwinCAT\3.1\Target\Certificates\rootCA.pem';
+	fbMqttClient.stTLS.sCert := 'C:\TwinCAT\3.1\Target\Certificates\myClientCert.pem';
+	fbMqttClient.stTLS.sKeyFile := 'C:\TwinCAT\3.1\Target\Certificates\myClientPrivateKey.key';
+	*)
+END_IF
+
+// required: cyclic call of Execute method
+fbMqttClient.Execute(bConnect);
+
+// error handling
+IF fbMqttClient.bError THEN
+	// Add your own error handling here
+	hrErrorOccurred := fbMqttClient.hrErrorCode;
+END_IF
+
+// demonstrate usage of MQTTv5 ReasonString
+IF NOT fbMqttClient.bConnected AND fbMqttClient.fbDisconnectProps.bPropertiesAvailable THEN
+	sReasonString := fbMqttClient.fbDisconnectProps.sReasonString;
+END_IF
+
+// demonstrates how to access MQTTv5 ConnAckProperties
+IF fbMqttClient.bConnected AND fbMqttClient.fbConnAckProps.bPropertiesAvailable THEN
+	IF fbMqttClient.fbConnAckProps.bRetainAvailable THEN
+		// Message Broker supports retain messages ...
+		bRetainSupported := TRUE;
+	END_IF
+END_IF
+
+// check if any messages have arrived
+IF fbMqttClient.fbMessageQueue.nQueuedMessages > 0 THEN
+	// a message has arrived -> retrieve the message from the queue and work with it
+	IF fbMqttClient.fbMessageQueue.Dequeue(fbMessage:=fbMessage) THEN
+		// get the topic on which the message has arrived
+		fbMessage.GetTopic(pTopic:=ADR(sTopicRcv), nTopicSize:=SIZEOF(sTopicRcv) );
+		// get the message payload
+		fbMessage.GetPayload(pPayload:=ADR(sPayloadRcv), nPayloadSize:=SIZEOF(sPayloadRcv), bSetNullTermination:=FALSE);
+		// check if there are any UserProperties
+		IF fbMessage.nUserPropertyCnt > 0 THEN
+			//  get all UserProperties from received message
+			FOR j := 1 TO MIN(fbMessage.nUserPropertyCnt, 10) DO
+				IF SUCCEEDED(hrPropRcv) THEN
+					hrPropRcv := fbMessage.GetUserPropertyByIdx(nIdx:=j-1, pName:=ADR(aName_UserRcv[j]), nNameSize:=SIZEOF(aName_UserRcv[j]), pValue:=ADR(aValue_UserRcv[j]), nValueSize:=SIZEOF(aValue_UserRcv[j]) );
+				END_IF
+			END_FOR
+		END_IF
+		// get one specific UserProperty from received message
+		IF SUCCEEDED(hrPropRcv) THEN
+			hrPropRcv := fbMessage.GetUserPropertyValueByName(sName := 'Sven', pValue:=ADR(sValueByName), nValueSize:=SIZEOF(sValueByName) );
+		END_IF
+	END_IF
+END_IF
+
+// execute the following code only when connected to the message broker
+IF fbMqttClient.bConnected THEN 
+	// check if a subscription has been created
+	IF NOT bSubscribed THEN
+		// subscribe to a topic
+		bSubscribed := fbMqttClient.Subscribe(sTopic:=sTopicSub, eQoS:=TcIotMqttQos.AtMostOnceDelivery, pProps:=fbSubProps.pSubscribeProperties);
+		// error handling
+		IF fbMqttClient.bError THEN
+			// add your ownerror handling here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+	
+	// cyclic publish on rising edge of the timer
+	fbTimer(IN:=TRUE);
+	IF fbTimer.Q THEN
+		fbTimer(IN:=FALSE);
+		
+		// set PublishProperties
+		fbPubProps.sContentType := sContentType;
+		fbPubProps.nMsgExpiryInterval := 7;
+		fbPubProps.bPayloadUtf8 := TRUE;
+		fbPubProps.ClearUserProperties();
+		
+		// set UserProperties and add them to PublishProperties
+		FOR m:=1 TO 10 DO
+			hrPropSet := fbPubProps.AddUserProperty(aUserName[m], aUserValue[m]);
+			IF FAILED(hrPropSet) THEN
+				EXIT;
+			END_IF
+		END_FOR
+		
+		// define content for message payload, which consists of a JSON document with some fake data and a timestamp
+		rSensor1 := rSensor1 + 0.1;
+		nSensor2 := nSensor2 + 1;
+		bSensor3 := NOT bSensor3;
+		sPayloadPub := F_CreateMessage(rSensor1, nSensor2, bSensor3);
+		
+		// publish the message
+		fbMqttClient.Publish(	sTopic:= sTopicPub, 
+								pPayload:= ADR(sPayloadPub), nPayloadSize:= LEN2(ADR(sPayloadPub))+1, 
+								eQoS:= TcIotMqttQos.AtMostOnceDelivery, bRetain:= FALSE, bQueue:= FALSE, pProps:=fbPubProps.pPublishProperties );
+								
+		// error handling
+		IF fbMqttClient.bError THEN
+			// add your error handling here
+			hrErrorOccurred := fbMqttClient.hrErrorCode;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PrgMqttCom">
+      <LineId Id="969" Count="4" />
+      <LineId Id="1123" Count="0" />
+      <LineId Id="974" Count="28" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="1004" Count="22" />
+      <LineId Id="1003" Count="0" />
+      <LineId Id="1028" Count="17" />
+      <LineId Id="1242" Count="0" />
+      <LineId Id="1046" Count="4" />
+      <LineId Id="1241" Count="0" />
+      <LineId Id="1051" Count="6" />
+      <LineId Id="1240" Count="0" />
+      <LineId Id="1178" Count="3" />
+      <LineId Id="1060" Count="0" />
+      <LineId Id="1239" Count="0" />
+      <LineId Id="1061" Count="10" />
+      <LineId Id="1027" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

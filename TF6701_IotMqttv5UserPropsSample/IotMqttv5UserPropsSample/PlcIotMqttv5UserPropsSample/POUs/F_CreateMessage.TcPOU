@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_CreateMessage" Id="{994d0d7a-b648-4e6d-8c39-ada2ba693505}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_CreateMessage : STRING(255)
+VAR_INPUT
+	Sensor1 : REAL;
+	Sensor2 : DINT;
+	Sensor3 : BOOL;
+END_VAR
+VAR
+	dtTimestamp : DATE_AND_TIME;
+	timeAsFileTime : T_FILETIME64;
+	fbJson : FB_JsonSaxWriter;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// create timestamp from current system time
+timeAsFileTime := F_GetSystemTime();
+dtTimestamp := FILETIME64_TO_DT( timeAsFileTime );
+
+// build and return JSON document
+fbJson.StartObject();
+fbJson.AddKey('Timestamp');
+fbJson.AddDateTime(dtTimestamp);
+fbJson.AddKey('Values');
+fbJson.StartObject();
+fbJson.AddKey('Sensor1');
+fbJson.AddReal(Sensor1);
+fbJson.AddKey('Sensor2');
+fbJson.AddDint(Sensor2);
+fbJson.AddKey('Sensor3');
+fbJson.AddBool(Sensor3);
+fbJson.EndObject();
+fbJson.EndObject();
+F_CreateMessage := fbJson.GetDocument();
+fbJson.ResetDocument();]]></ST>
+    </Implementation>
+    <LineIds Name="F_CreateMessage">
+      <LineId Id="29" Count="0" />
+      <LineId Id="34" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="9" Count="13" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
